@@ -1,0 +1,7 @@
+{
+	"pnpm": {
+		"patchedDependencies": {
+			"@astar-network/swanky-core@1.0.11": "patches/@astar-network__swanky-core@1.0.11.patch"
+		}
+	}
+}
