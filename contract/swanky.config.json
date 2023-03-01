@@ -21,11 +21,11 @@
   "contracts": {
     "sbt": {
       "name": "sbt",
-      "language": "ink",
-      "build": {
-        "timestamp": 1677571835624,
-        "artifactsPath": "/Users/austin/GitHub/toyota-key3-hackathon/contract/artifacts/sbt/1677571835624"
-      }
+      "language": "ink"
+    },
+    "proposal_manager": {
+      "name": "proposal_manager",
+      "language": "ink"
     }
   },
   "networks": {

@@ -13,6 +13,7 @@ scale-info = { version = "2.3", default-features = false, features = ["derive"],
 
 # Include brush as a dependency and enable default implementation for PSP34 via brush feature
 openbrush = { tag = "3.0.0", git = "https://github.com/727-Ventures/openbrush-contracts", default-features = false, features = ["psp34"] }
+sbt = { path = "../sbt", default-features = false, features = ["ink-as-dependency"] }
 
 [lib]
 name = "task_manager"
@@ -20,6 +21,8 @@ path = "lib.rs"
 crate-type = [
     # Used for normal contract Wasm blobs.
     "cdylib",
+    # Used for ABI generation.
+    "rlib",
 ]
 
 [features]
@@ -30,5 +33,6 @@ std = [
     "scale-info/std",
 
     "openbrush/std",
+    "sbt/std"
 ]
 ink-as-dependency = []

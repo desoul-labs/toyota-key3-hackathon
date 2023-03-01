@@ -4,48 +4,69 @@
 #[openbrush::contract]
 pub mod sbt {
     use openbrush::{
-        contracts::psp34::{extensions::metadata::*, Transfer, PSP34Error},
+        contracts::psp34::{
+            extensions::{
+                enumerable::*,
+                metadata::*,
+            },
+            PSP34Error,
+            Transfer,
+        },
         traits::Storage,
     };
 
     #[ink(storage)]
-    #[derive(Default, Storage)]
-    pub struct Contract {
+    #[derive(Storage)]
+    pub struct SBT {
         #[storage_field]
-        psp34: psp34::Data,
+        psp34: psp34::Data<Balances>,
         #[storage_field]
-        metadata: Data,
-        next_id: u8,
+        metadata: metadata::Data,
+        next_id: u128,
+        owner: AccountId,
     }
 
-    impl PSP34 for Contract {}
+    impl PSP34 for SBT {}
+    impl PSP34Enumerable for SBT {}
+    impl PSP34Metadata for SBT {}
 
-    impl Transfer for Contract {
+    impl Transfer for SBT {
         fn _before_token_transfer(
             &mut self,
             _from: Option<&AccountId>,
             _to: Option<&AccountId>,
             _id: &Id,
         ) -> Result<(), PSP34Error> {
-            Err(PSP34Error::Custom("Transfer is not supported".into()))
+            if _from.is_some() && _to.is_some() {
+                return Err(PSP34Error::Custom("Transfer is not supported".into()))
+            }
+            Ok(())
         }
     }
 
-    impl Contract {
+    impl SBT {
         #[ink(constructor)]
         pub fn new() -> Self {
-            Self::default()
+            let mut _instance = SBT {
+                psp34: psp34::Data::default(),
+                metadata: metadata::Data::default(),
+                next_id: 0,
+                owner: Self::env().caller(),
+            };
+            _instance
+        }
+
+        #[ink(message)]
+        pub fn has_token(&self) -> bool {
+            return self.owners_token_by_index(Self::env().caller(), 0).is_ok();
         }
 
         #[ink(message)]
         pub fn mint_token(&mut self) -> Result<(), PSP34Error> {
-            let balance = self.balance_of(Self::env().caller());
-            if balance > 0 {
-                return Err(PSP34Error::Custom("You already have a token".into()));
+            if self.has_token() {
+                return Err(PSP34Error::Custom("You already have a token".into()))
             }
-            self._mint_to(Self::env().caller(), Id::U8(self.next_id))?;
-            self.next_id += 1;
-            Ok(())
+            return self._mint_to(Self::env().caller(), Id::U128(self.next_id));
         }
     }
 }
