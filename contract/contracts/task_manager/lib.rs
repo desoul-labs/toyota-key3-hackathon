@@ -119,11 +119,8 @@ pub mod task_manager {
         }
 
         #[ink(message)]
-        pub fn get_score(&self, account: AccountId) -> Result<u32, PSP34Error> {
-            if !self.sbt_contract.has_token() {
-                return Err(PSP34Error::Custom("Not a member".into()))
-            }
-            Ok(self.score.get(&account).unwrap_or(0))
+        pub fn get_score(&self, account: AccountId) -> u32 {
+            self.score.get(&account).unwrap_or(0)
         }
 
         #[ink(message)]

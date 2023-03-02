@@ -92,11 +92,8 @@ pub mod proposal_manager {
         }
 
         #[ink(message)]
-        pub fn get_proposal(&self, id: Id) -> Result<Vec<u32>, PSP34Error> {
-            if self.proposal.get(&id).is_none() {
-                return Err(PSP34Error::Custom("Proposal not found".into()))
-            }
-            Ok(self.proposal.get(&id).unwrap())
+        pub fn get_proposal(&self, id: Id) -> Vec<u32> {
+            self.proposal.get(&id).unwrap()
         }
 
         #[ink(message)]
@@ -131,7 +128,8 @@ pub mod proposal_manager {
                 temp = (total_owner / temp + temp) / 2;
             }
 
-            let vote_credit = factor as u32 * voter_score.unwrap_or(1) / total_score;
+            let normalized_voter_score = if voter_score == 0 { 1 } else { voter_score };
+            let vote_credit = factor as u32 * normalized_voter_score * 100 / total_score;
             if vote_sum != vote_credit {
                 return Err(PSP34Error::Custom("Invalid vote".into()))
             }
