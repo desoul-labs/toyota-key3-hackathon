@@ -6,7 +6,6 @@ pub mod proposal_manager {
     use ink::{
         prelude::vec::Vec,
         storage::Mapping,
-        storage::StorageLayout,
     };
     use openbrush::{
         contracts::psp34::{
@@ -22,7 +21,7 @@ pub mod proposal_manager {
         },
     };
     use sbt::sbt::SBTRef;
-    use task_manager::task_manager::*;
+    use task_manager::task_manager::TaskManagerRef;
 
     #[ink(storage)]
     #[derive(Storage)]
@@ -43,14 +42,22 @@ pub mod proposal_manager {
 
     impl ProposalManager {
         #[ink(constructor)]
-        pub fn new(sbt_contract: SBTRef, task_manager: TaskManagerRef) -> Self {
+        pub fn new(sbt_hash: Hash, task_manager_hash: Hash, version: u32) -> Self {
             let mut _instance = ProposalManager {
                 psp34: psp34::Data::default(),
                 metadata: Data::default(),
                 next_id: 0,
                 proposal: Mapping::new(),
-                sbt_contract,
-                task_manager,
+                task_manager: TaskManagerRef::new(sbt_hash, version)
+                    .endowment(0)
+                    .code_hash(task_manager_hash)
+                    .salt_bytes(version.to_le_bytes())
+                    .instantiate(),
+                sbt_contract: SBTRef::new()
+                    .endowment(30000)
+                    .code_hash(sbt_hash)
+                    .salt_bytes(version.to_le_bytes())
+                    .instantiate(),
             };
 
             let collection_id = _instance.collection_id();

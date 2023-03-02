@@ -35,5 +35,6 @@ std = [
 
     "openbrush/std",
     "sbt/std",
+    "task_manager/std",
 ]
 ink-as-dependency = []

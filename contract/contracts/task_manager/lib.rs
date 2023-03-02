@@ -26,7 +26,7 @@ pub mod task_manager {
     #[derive(Storage)]
     pub struct TaskManager {
         #[storage_field]
-        psp34: psp34::Data,
+        psp34: psp34::Data<Balances>,
         #[storage_field]
         metadata: Data,
         next_id: u8,
@@ -35,7 +35,7 @@ pub mod task_manager {
         sbt_contract: SBTRef,
         score: Mapping<AccountId, u64>,
         total_score: u64,
-        // voted: Mapping<Id, Mapping<AccountId, ()>>,
+        voted: u8,
     }
 
     impl PSP34 for TaskManager {}
@@ -44,16 +44,21 @@ pub mod task_manager {
 
     impl TaskManager {
         #[ink(constructor)]
-        pub fn new(sbt_contract: SBTRef) -> Self {
+        pub fn new(sbt_hash: Hash, version: u32) -> Self {
             let mut _instance = TaskManager {
                 psp34: psp34::Data::default(),
                 metadata: Data::default(),
                 next_id: 0,
                 deadlines: Mapping::new(),
                 completed: Mapping::new(),
-                sbt_contract,
+                sbt_contract: SBTRef::new()
+                    .endowment(30000)
+                    .code_hash(sbt_hash)
+                    .salt_bytes(version.to_le_bytes())
+                    .instantiate(),
                 score: Mapping::new(),
                 total_score: 0,
+                voted: 0,
             };
 
             let collection_id = _instance.collection_id();
