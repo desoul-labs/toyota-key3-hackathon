@@ -68,5 +68,10 @@ pub mod sbt {
             }
             return self._mint_to(Self::env().caller(), Id::U128(self.next_id));
         }
+
+        #[ink(message)]
+        pub fn total_owners(&self) -> u128 {
+            return self.total_supply();
+        }
     }
 }
