@@ -22,7 +22,7 @@ pub mod sbt {
         psp34: psp34::Data<Balances>,
         #[storage_field]
         metadata: metadata::Data,
-        next_id: u128,
+        next_id: u32,
         owner: AccountId,
     }
 
@@ -66,7 +66,7 @@ pub mod sbt {
             if self.has_token() {
                 return Err(PSP34Error::Custom("You already have a token".into()))
             }
-            return self._mint_to(Self::env().caller(), Id::U128(self.next_id));
+            return self._mint_to(Self::env().caller(), Id::U32(self.next_id));
         }
 
         #[ink(message)]
