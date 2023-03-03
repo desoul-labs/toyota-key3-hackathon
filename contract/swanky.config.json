@@ -26,6 +26,10 @@
     "proposal_manager": {
       "name": "proposal_manager",
       "language": "ink"
+    },
+    "task_manager": {
+      "name": "task_manager",
+      "language": "ink"
     }
   },
   "networks": {
