@@ -66,7 +66,10 @@ pub mod sbt {
             if self.has_token() {
                 return Err(PSP34Error::Custom("You already have a token".into()))
             }
-            return self._mint_to(Self::env().caller(), Id::U32(self.next_id));
+
+            self._mint_to(Self::env().caller(), Id::U32(self.next_id))?;
+            self.next_id += 1;
+            Ok(())
         }
 
         #[ink(message)]
