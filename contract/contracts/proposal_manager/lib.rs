@@ -20,8 +20,8 @@ pub mod proposal_manager {
             String,
         },
     };
-    use sbt::sbt::SBTRef;
-    use task_manager::task_manager::TaskManagerRef;
+    use sbt::traits::SBTRef;
+    use task_manager::traits::TaskManagerRef;
 
     #[ink(storage)]
     #[derive(Storage)]
@@ -33,8 +33,8 @@ pub mod proposal_manager {
         next_id: u32,
         proposal: Mapping<Id, Vec<u32>>,
         deadline: Mapping<Id, u64>,
-        sbt_contract: SBTRef,
-        task_manager: TaskManagerRef,
+        task_manager: AccountId,
+        sbt: AccountId,
     }
 
     impl PSP34 for ProposalManager {}
@@ -43,23 +43,15 @@ pub mod proposal_manager {
 
     impl ProposalManager {
         #[ink(constructor)]
-        pub fn new(sbt_hash: Hash, task_manager_hash: Hash, version: u32) -> Self {
+        pub fn new(task_manager: AccountId, sbt: AccountId) -> Self {
             let mut _instance = ProposalManager {
                 psp34: psp34::Data::default(),
                 metadata: Data::default(),
                 next_id: 0,
                 proposal: Mapping::new(),
                 deadline: Mapping::new(),
-                task_manager: TaskManagerRef::new(sbt_hash, version)
-                    .endowment(1000000)
-                    .code_hash(task_manager_hash)
-                    .salt_bytes(version.to_le_bytes())
-                    .instantiate(),
-                sbt_contract: SBTRef::new()
-                    .endowment(1000000)
-                    .code_hash(sbt_hash)
-                    .salt_bytes(version.to_le_bytes())
-                    .instantiate(),
+                task_manager,
+                sbt,
             };
 
             let collection_id = _instance.collection_id();
@@ -74,7 +66,7 @@ pub mod proposal_manager {
 
         #[ink(message)]
         pub fn create_proposal(&mut self, deadline: u64, option_count: u8) -> Result<(), PSP34Error> {
-            if !self.sbt_contract.has_token() {
+            if SBTRef::balance_of(&self.sbt, Self::env().caller()) == 0 {
                 return Err(PSP34Error::Custom("Not a member".into()))
             }
             if deadline < Self::env().block_timestamp() {
@@ -98,7 +90,7 @@ pub mod proposal_manager {
 
         #[ink(message)]
         pub fn vote_proposal(&mut self, id: Id, votes: Vec<u32>) -> Result<(), PSP34Error> {
-            if !self.sbt_contract.has_token() {
+            if SBTRef::balance_of(&self.sbt, Self::env().caller()) == 0 {
                 return Err(PSP34Error::Custom("Not a member".into()))
             }
             if self.proposal.get(&id).is_none() {
@@ -113,12 +105,12 @@ pub mod proposal_manager {
             }
 
             let vote_sum: u32 = votes.iter().sum();
-            let total_owner = self.sbt_contract.total_owners();
-            let voter_score = self.task_manager.get_score(Self::env().caller());
-            let total_score = if self.task_manager.get_total_score() == 0 {
+            let total_owner = SBTRef::total_supply(&self.sbt);
+            let voter_score = TaskManagerRef::get_score(&self.sbt, Self::env().caller());
+            let total_score = if TaskManagerRef::get_total_score(&self.sbt) == 0 {
                 total_owner as u32
             } else {
-                self.task_manager.get_total_score()
+                TaskManagerRef::get_total_score(&self.sbt)
             };
 
             let mut temp = (total_owner + 1) / 2;

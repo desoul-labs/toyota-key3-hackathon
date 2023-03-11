@@ -1,6 +1,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![feature(min_specialization)]
 
+pub mod traits;
+
 #[openbrush::contract]
 pub mod sbt {
     use openbrush::{
@@ -57,24 +59,14 @@ pub mod sbt {
         }
 
         #[ink(message)]
-        pub fn has_token(&self) -> bool {
-            return self.owners_token_by_index(Self::env().caller(), 0).is_ok();
-        }
-
-        #[ink(message)]
         pub fn mint_token(&mut self) -> Result<(), PSP34Error> {
-            if self.has_token() {
+            if self.balance_of(Self::env().caller()) > 0 {
                 return Err(PSP34Error::Custom("You already have a token".into()))
             }
 
             self._mint_to(Self::env().caller(), Id::U32(self.next_id))?;
             self.next_id += 1;
             Ok(())
-        }
-
-        #[ink(message)]
-        pub fn total_owners(&self) -> u128 {
-            return self.total_supply();
         }
     }
 }
