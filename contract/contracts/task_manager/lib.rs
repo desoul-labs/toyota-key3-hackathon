@@ -1,6 +1,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![feature(min_specialization)]
 
+pub mod traits;
+
 #[openbrush::contract]
 pub mod task_manager {
     use ink::prelude::vec::Vec;
@@ -18,7 +20,7 @@ pub mod task_manager {
             String,
         },
     };
-    use sbt::sbt::SBTRef;
+    use sbt::traits::SBTRef;
 
     #[ink(storage)]
     #[derive(Storage)]
@@ -30,10 +32,10 @@ pub mod task_manager {
         next_id: u32,
         deadlines: Mapping<Id, u64>,
         completed: Mapping<Id, ()>,
-        sbt_contract: SBTRef,
         score: Mapping<AccountId, u32>,
         total_score: u32,
         evaluated: Mapping<(Id, AccountId), ()>,
+        sbt: AccountId,
     }
 
     impl PSP34 for TaskManager {}
@@ -42,21 +44,17 @@ pub mod task_manager {
 
     impl TaskManager {
         #[ink(constructor)]
-        pub fn new(sbt_hash: Hash, version: u32) -> Self {
+        pub fn new(sbt: AccountId) -> Self {
             let mut _instance = TaskManager {
                 psp34: psp34::Data::default(),
                 metadata: Data::default(),
                 next_id: 0,
                 deadlines: Mapping::default(),
                 completed: Mapping::default(),
-                sbt_contract: SBTRef::new()
-                    .endowment(1000000)
-                    .code_hash(sbt_hash)
-                    .salt_bytes(version.to_le_bytes())
-                    .instantiate(),
                 score: Mapping::default(),
                 total_score: 0,
                 evaluated: Mapping::default(),
+                sbt,
             };
 
             let collection_id = _instance.collection_id();
@@ -67,7 +65,7 @@ pub mod task_manager {
 
         #[ink(message)]
         pub fn create_task(&mut self, deadline: u64) -> Result<(), PSP34Error> {
-            if !self.sbt_contract.has_token() {
+            if SBTRef::balance_of(&self.sbt, Self::env().caller()) == 0 {
                 return Err(PSP34Error::Custom("Not a member".into()))
             }
             if deadline < Self::env().block_timestamp() {
@@ -81,7 +79,7 @@ pub mod task_manager {
 
         #[ink(message)]
         pub fn take_task(&mut self, id: Id) -> Result<(), PSP34Error> {
-            if !self.sbt_contract.has_token() {
+            if SBTRef::balance_of(&self.sbt, Self::env().caller()) == 0 {
                 return Err(PSP34Error::Custom("Not a member".into()))
             }
             if self.owner_of(id.clone()).unwrap() != Self::env().account_id() {
@@ -95,7 +93,7 @@ pub mod task_manager {
 
         #[ink(message)]
         pub fn complete_task(&mut self, id: Id) -> Result<(), PSP34Error> {
-            if !self.sbt_contract.has_token() {
+            if SBTRef::balance_of(&self.sbt, Self::env().caller()) == 0 {
                 return Err(PSP34Error::Custom("Not a member".into()))
             }
             if self.owner_of(id.clone()).unwrap() != Self::env().caller() {
@@ -130,7 +128,7 @@ pub mod task_manager {
 
         #[ink(message)]
         pub fn evaluate_task(&mut self, id: Id, evaluation: u32) -> Result<(), PSP34Error> {
-            if !self.sbt_contract.has_token() {
+            if SBTRef::balance_of(&self.sbt, Self::env().caller()) == 0 {
                 return Err(PSP34Error::Custom("Not a member".into()))
             }
             if self.owner_of(id.clone()).is_none() {
@@ -152,7 +150,7 @@ pub mod task_manager {
 
             let evaluator_score = self.score.get(&caller);
             let total_score = if self.total_score == 0 {
-                self.sbt_contract.total_owners() as u32
+                SBTRef::total_supply(&self.sbt) as u32
             } else {
                 self.total_score
             };
