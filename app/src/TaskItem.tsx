@@ -96,14 +96,14 @@ function TaskItem({ item }: Props) {
                 <CloseIcon />
               </IconButton>
             </div>
-            <h2 className="text-2xl font-bold mb-4 text-center">Modal Title</h2>
+            <h2 className="text-2xl font-bold mb-4 text-center">{item.title}</h2>
             <div className="flex items-center mb-4">
               <Person2Icon fontSize="large" className="text-gray-500 mr-2" />
-              <span className="text-lg font-bold">John Doe</span>
+              <span className="text-lg font-bold">{item.user}</span>
               <span className="ml-4 text-gray-500">Due Date: 2023-03-01</span>
             </div>
             <p className="text-lg text-gray-800">
-              This is the description of the modal.
+              {item.description}
             </p>
             <div className="flex flex-col mt-10">
               <Typography>評価点(0-100)</Typography>
@@ -137,14 +137,14 @@ function TaskItem({ item }: Props) {
                 <CloseIcon />
               </IconButton>
             </div>
-            <h2 className="text-2xl font-bold mb-4 text-center">Modal Title</h2>
+            <h2 className="text-2xl font-bold mb-4 text-center">{item.title}</h2>
             <div className="flex items-center mb-4">
               <Person2Icon fontSize="large" className="text-gray-500 mr-2" />
-              <span className="text-lg font-bold">John Doe</span>
+              <span className="text-lg font-bold">{item.user}</span>
               <span className="ml-4 text-gray-500">Due Date: 2023-03-01</span>
             </div>
             <p className="text-lg text-gray-800">
-              This is the description of the modal.
+              {item.description}
             </p>
             <div className="flex flex-col mt-10">
               <Typography>評価点(0-100)</Typography>

@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import CloseIcon from '@mui/icons-material/Close';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ProposalItem from './ProposalItem';
@@ -11,14 +12,18 @@ interface Proposal {
 }
 
 function ProposalList() {
+  const navigate = useNavigate();
+  const handleProposalCreation = () => {
+    navigate('/proposal/creation');
+  }
   return (
     <div>
       <div className="flex justify-between items-center px-4 py-2 border-b-2 border-gray-200">
         <div className="flex flex-col items-center">
         </div>
         <div className="flex flex-col items-center">
-          <AddCircleOutlineIcon fontSize='large' className='text-blue-500 font-bold' />
-          <span className="font-bold text-sm text-blue-500">タスクを作成</span>
+          <AddCircleOutlineIcon fontSize='large' className='text-blue-500 font-bold' onClick={() => handleProposalCreation()} />
+          <span className="font-bold text-sm text-blue-500">提案を作成</span>
         </div>
       </div>
       {Data !== undefined && Data.map((proposal) => {

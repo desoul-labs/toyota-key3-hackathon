@@ -20,7 +20,7 @@ import { ApiContext } from './context/ApiContext';
 
 const address: string =
   process.env.CONTRACT_ADDRESS ||
-  'Xhenj4jfoiT4vJvqfMBjmTwJTiAHdu18tu4rpbybe6CRKQq';
+  'YXpfeRsSxi4mv4FhQ6fkqF6LdgTw8L36PcYvtZsoesBppwZ';
 
 function CredentialCreation() {
   const { api, apiReady } = useContext(ApiContext);

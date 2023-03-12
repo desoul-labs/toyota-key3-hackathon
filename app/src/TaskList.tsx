@@ -1,12 +1,18 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import TaskItem from "./TaskItem";
 import dayjs, { Dayjs } from 'dayjs';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import { Button, IconButton, Modal, OutlinedInput, TextField, Typography } from "@mui/material";
+import { Box, Button, CircularProgress, Dialog, DialogTitle, IconButton, Modal, OutlinedInput, TextField, Typography } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { ApiContext } from './context/ApiContext';
+import ABI from './task_manager/artifacts/task_manager.json';
+import { ContractPromise, Abi } from '@polkadot/api-contract';
+import { WeightV2 } from '@polkadot/types/interfaces';
+import { Keyring } from '@polkadot/api';
+import BN from "bn.js";
 
 interface item {
   id: string;
@@ -17,15 +23,24 @@ interface item {
   status: 0 | 1 | 2;
 };
 
+const timeTest = new BN(2_168_018_840_013)
+const address: string =
+  process.env.CONTRACT_ADDRESS ||
+  'Z9hGfS7gvyvPLjAMne9qkJjmgS9EPbktxrmVz17nc6sypXE';
+
 function TaskList() {
   const [tasks, setTasks] = useState<item[]>()
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState<string>('')
   const [description, setDescription] = useState<string>('')
+  const [loading, setLoading] = useState(true)
+  const [contract, setContract] = useState<ContractPromise>()
   const [user, setUser] = useState<string>('')
+  const [successMsg, setSuccessMsg] = useState('');
 
-  const [timeValue, setTimeValue] = useState<Dayjs | null>();
-  const handleOpen = () => setOpen(true)
+  const [timeValue, setTimeValue] = useState<Dayjs | undefined>()
+  const { api, apiReady } = useContext(ApiContext);
+
   const handleClose = () => setOpen(false)
   const TaskCreationClicked = () => {
     setOpen(true)
@@ -39,9 +54,73 @@ function TaskList() {
       setTasks(data);
     }
     fetchData()
+
+
   }, [])
 
+  useEffect(() => {
+    if (!api || !apiReady) {
+      console.log('api is not ready');
+      return;
+    }
+    const abi = new Abi(ABI, api.registry.getChainProperties());
+    const contract = new ContractPromise(api, abi, address);
+    setLoading(false);
+    setContract(contract);
+    console.log(contract)
+    const test = api?.query.timestamp.now()
+    console.log(test)
+  }, [api, apiReady]);
+
   const createTask = async () => {
+    setSuccessMsg('');
+    if (!api || !apiReady) {
+      console.log('The API is not ready');
+      return;
+    }
+
+    if (!contract) {
+      console.log('no contract');
+      return;
+    }
+
+    setLoading(true);
+    //Alice, Bob, Charlie, Dave, Eve and Ferdie
+    const keyring = new Keyring({ type: 'sr25519' });
+    const alice = keyring.addFromUri('//Eve', { name: 'Alice default' });
+
+    const time = timeValue?.toISOString()
+
+    const jsTime = new Date(time!).getTime();
+    const blockTime = Math.floor(jsTime / 1000).toString();
+    console.log(blockTime)
+    const unsub = await contract.tx
+      .createTask(
+        {
+          gasLimit: api.registry.createType('WeightV2', {
+            refTime: 3951114240,
+            proofSize: 629760,
+          }) as WeightV2
+        },
+        timeTest
+      )
+      .signAndSend(alice, (res: any) => {
+        if (res.status.isInBlock) {
+          console.log('in a block');
+        }
+        if (res.status.isFinalized) {
+          setLoading(false);
+          const today = new Date();
+          const twoYearsLater = new Date(today.getFullYear() + 2, today.getMonth(), today.getDate());
+          localStorage.setItem('expiredAt', twoYearsLater.toISOString());
+          setSuccessMsg('Success!');
+          console.log('finalized');
+          res.events.forEach((record: any) => {
+            const { event } = record;
+            console.log('event', event.toHuman());
+          });
+        }
+      });
     const task: item = {
       id: '4',
       title: title,
@@ -49,22 +128,39 @@ function TaskList() {
       expiredAt: timeValue?.toString() as string,
       status: 0
     }
-    const response = await fetch('https://toyota-hackathon.azurewebsites.net/api/CreateTask', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(task)
-    })
-    if (response.status === 200) {
-      const newTasks = tasks === undefined ? [task] : [...tasks, task];
-      setTasks(newTasks);
-    }
+
+
+    console.log(timeValue?.toISOString())
+    // const response = await fetch('https://toyota-hackathon.azurewebsites.net/api/CreateTask', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //   },
+    //   body: JSON.stringify(task)
+    // })
+    // if (response.status === 200) {
+    //   const newTasks = tasks === undefined ? [task] : [...tasks, task];
+    //   setTasks(newTasks);
+    // }
     setOpen(false)
   }
 
   return (
     <div>
+      <Dialog onClose={handleClose} open={loading}>
+        <DialogTitle>Please wait</DialogTitle>
+        <Box
+          sx={{
+            width: '250px',
+            height: '250px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <CircularProgress />
+        </Box>
+      </Dialog>
       <div className="flex justify-between items-center px-4 py-2 border-b-2 border-gray-200">
         <div className="flex flex-col items-center">
           <span className="font-bold text-3xl text-blue-500">180</span>
@@ -121,8 +217,8 @@ function TaskList() {
                 <DemoContainer components={['DatePicker']}>
                   <DatePicker
                     sx={{ mb: 2 }}
-                    value={timeValue}
-                    onChange={(newValue) => setTimeValue(newValue)}
+                    value={timeValue ?? null}
+                    onChange={(newValue) => setTimeValue(newValue!)}
                   />
                 </DemoContainer>
               </LocalizationProvider>
