@@ -20,7 +20,7 @@ import { ApiContext } from './context/ApiContext';
 
 const address: string =
   process.env.CONTRACT_ADDRESS ||
-  'WoRKR8r3AEuY6ATKwihxJwNESwenWq8VDqqp2fSUoo11AMQ';
+  'Xhenj4jfoiT4vJvqfMBjmTwJTiAHdu18tu4rpbybe6CRKQq';
 
 function CredentialCreation() {
   const { api, apiReady } = useContext(ApiContext);
@@ -81,6 +81,11 @@ function CredentialCreation() {
           localStorage.setItem('name', name);
           localStorage.setItem('department', department);
           localStorage.setItem('skill', skill);
+          localStorage.setItem('address', alice.address);
+          localStorage.setItem('startedAt', new Date().toISOString());
+          const today = new Date();
+          const twoYearsLater = new Date(today.getFullYear() + 2, today.getMonth(), today.getDate());
+          localStorage.setItem('expiredAt', twoYearsLater.toISOString());
           setSuccessMsg('Success!');
           setTimeout(() => navigate('/'), 1000);
           console.log('finalized');
