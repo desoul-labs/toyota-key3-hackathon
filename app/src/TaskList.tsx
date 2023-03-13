@@ -13,7 +13,7 @@ import { ContractPromise, Abi } from '@polkadot/api-contract';
 import { WeightV2 } from '@polkadot/types/interfaces';
 import { Keyring } from '@polkadot/api';
 import BN from "bn.js";
-
+import { u64 } from '@polkadot/types';
 interface item {
   id: string;
   title: string;
@@ -91,18 +91,24 @@ function TaskList() {
 
     const time = timeValue?.toISOString()
 
-    const jsTime = new Date(time!).getTime();
-    const blockTime = Math.floor(jsTime / 1000).toString();
-    console.log(blockTime)
+    // const jsTime = new Date(time!).getTime();
+    // const blockTime = Math.floor(jsTime / 1000).toString();
+    // console.log(blockTime)
+    // const blockTime1 = await api.query.timestamp.now();
+    // const deadline = api.registry.createType('u64', blockTime1.toNumber());
+    let deadline: u64;
+    api.query.timestamp.now().then((blockTime1: any) => {
+      deadline = api.registry.createType('u64', blockTime1.toNumber());
+    })
     const unsub = await contract.tx
       .createTask(
+        // deadline as any,
         {
           gasLimit: api.registry.createType('WeightV2', {
             refTime: 3951114240,
             proofSize: 629760,
           }) as WeightV2
         },
-        timeTest
       )
       .signAndSend(alice, (res: any) => {
         if (res.status.isInBlock) {
@@ -120,7 +126,7 @@ function TaskList() {
             console.log('event', event.toHuman());
           });
         }
-      });
+      })
     const task: item = {
       id: '4',
       title: title,

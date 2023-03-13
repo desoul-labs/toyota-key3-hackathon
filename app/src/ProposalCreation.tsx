@@ -15,6 +15,7 @@ import { Keyring } from '@polkadot/api';
 import BN from "bn.js";
 import { useNavigate } from "react-router-dom";
 import AddIcon from '@mui/icons-material/Add';
+import { ArrowBack } from "@mui/icons-material";
 
 function ProposalCreation() {
   const [open, setOpen] = useState(false)
@@ -43,9 +44,18 @@ function ProposalCreation() {
     setOptions(newOptions);
   };
 
+  const BackButtonClicked = () => {
+    navigate(`/proposal`);
+  }
   return (
     <div className="flex items-center justify-center h-full">
       <div className="relative w-full sm:w-1/2 bg-white rounded-md p-8">
+        <IconButton onClick={() => BackButtonClicked()}>
+          <ArrowBack />
+        </IconButton>
+        <div className="flex-1 flex justify-center">
+          <Typography sx={{ fontSize: "20px" }}>提案を作成</Typography>
+        </div>
         <div className="flex flex-col mt-2">
           <Typography>タイトル</Typography>
           <OutlinedInput
