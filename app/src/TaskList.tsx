@@ -20,7 +20,7 @@ interface item {
   description: string;
   expiredAt: string;
   user?: string;
-  status: 0 | 1 | 2;
+  status: 0 | 1 | 2; // 0: not started, 1: in progress, 2: completed
 };
 
 const timeTest = new BN(2_168_018_840_013)
@@ -54,8 +54,6 @@ function TaskList() {
       setTasks(data);
     }
     fetchData()
-
-
   }, [])
 
   useEffect(() => {
@@ -89,17 +87,11 @@ function TaskList() {
     const keyring = new Keyring({ type: 'sr25519' });
     const alice = keyring.addFromUri('//Eve', { name: 'Alice default' });
 
-    const time = timeValue?.toISOString()
-
-    // const jsTime = new Date(time!).getTime();
-    // const blockTime = Math.floor(jsTime / 1000).toString();
-    // console.log(blockTime)
-    // const blockTime1 = await api.query.timestamp.now();
-    // const deadline = api.registry.createType('u64', blockTime1.toNumber());
     let deadline: u64;
     api.query.timestamp.now().then((blockTime1: any) => {
       deadline = api.registry.createType('u64', blockTime1.toNumber());
     })
+    // Todo: calculate deadline (blocktime + unix time)
     const unsub = await contract.tx
       .createTask(
         // deadline as any,
@@ -127,27 +119,29 @@ function TaskList() {
           });
         }
       })
-    const task: item = {
-      id: '4',
-      title: title,
-      description: description,
-      expiredAt: timeValue?.toString() as string,
-      status: 0
+
+    if (successMsg !== '') {
+      const task: item = {
+        id: '4',
+        title: title,
+        description: description,
+        expiredAt: timeValue!.unix().toString(),
+        status: 0
+      }
+
+      const response = await fetch('https://toyota-hackathon.azurewebsites.net/api/CreateTask', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(task)
+      })
+      if (response.status === 200) {
+        const newTasks = tasks === undefined ? [task] : [...tasks, task];
+        setTasks(newTasks);
+      }
     }
 
-
-    console.log(timeValue?.toISOString())
-    // const response = await fetch('https://toyota-hackathon.azurewebsites.net/api/CreateTask', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //   },
-    //   body: JSON.stringify(task)
-    // })
-    // if (response.status === 200) {
-    //   const newTasks = tasks === undefined ? [task] : [...tasks, task];
-    //   setTasks(newTasks);
-    // }
     setOpen(false)
   }
 

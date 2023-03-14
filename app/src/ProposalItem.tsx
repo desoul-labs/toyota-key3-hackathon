@@ -15,6 +15,7 @@ interface ProposalItemProps {
     user?: string;
   }
 }
+
 function ProposalItem({ proposal }: ProposalItemProps) {
   const navigate = useNavigate();
   const ProposalItemClicked = () => {
@@ -22,20 +23,24 @@ function ProposalItem({ proposal }: ProposalItemProps) {
   }
   return (
     <>
-      <div className="flex justify-between items-center mb-2" style={{ height: "90px" }} onClick={() => ProposalItemClicked()}>
+      <div className="flex justify-between items-center mb-2 mx-1" style={{ height: "90px" }} onClick={() => ProposalItemClicked()}>
         <div>
           <h3 className="text-lg mb-2 mt-2">{proposal.title}</h3>
           <p className="text-sm">{proposal.description}</p>
         </div>
-        <div className="flex items-center mr-2">
-          <Person2Icon />
-          <Typography sx={{ marginRight: '10px' }} component="span" variant="body2" color="text.primary">
-            {proposal.user}
-          </Typography>
-          <AccessAlarmIcon />
-          <Typography component="span" variant="body2" color="text.primary">
-            {proposal.expiredAt}
-          </Typography>
+        <div className="flex flex-col items-center mr-2">
+          <div className="flex items-center">
+            <Person2Icon />
+            <Typography sx={{ marginRight: '10px' }} component="span" variant="body2" color="text.primary">
+              {proposal.user}
+            </Typography>
+          </div>
+          <div className="flex items-center mt-1">
+            <AccessAlarmIcon />
+            <Typography component="span" variant="body2" color="text.primary">
+              {new Date(parseInt(proposal.expiredAt) * 1000).toLocaleString().slice(0, 10)}
+            </Typography>
+          </div>
         </div>
       </div>
 

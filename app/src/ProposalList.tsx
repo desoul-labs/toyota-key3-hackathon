@@ -2,20 +2,33 @@ import { useNavigate } from 'react-router-dom';
 import CloseIcon from '@mui/icons-material/Close';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ProposalItem from './ProposalItem';
+import { useEffect, useState } from 'react';
 
 interface Proposal {
   id: string;
   title: string;
   description: string;
   expiredAt: string;
-  user?: string;
+  user: string;
 }
 
 function ProposalList() {
-  const navigate = useNavigate();
+  const [proposals, setProposals] = useState<Proposal[]>()
+  const navigate = useNavigate()
   const handleProposalCreation = () => {
-    navigate('/proposal/creation');
+    navigate('/proposal/creation')
   }
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const response = await fetch('https://toyota-hackathon.azurewebsites.net/api/GetProposals');
+      const data = await response.json();
+      console.log(data)
+      setProposals(data);
+    }
+    fetchData()
+  }, [])
+
   return (
     <div>
       <div className="flex justify-between items-center px-4 py-2 border-b-2 border-gray-200">
@@ -26,7 +39,7 @@ function ProposalList() {
           <span className="font-bold text-sm text-blue-500">提案を作成</span>
         </div>
       </div>
-      {Data !== undefined && Data.map((proposal) => {
+      {proposals !== undefined && proposals.map((proposal) => {
         return (
           <ProposalItem key={proposal.id} proposal={proposal as Proposal} />
         )
@@ -35,27 +48,4 @@ function ProposalList() {
   );
 }
 
-const Data = [
-  {
-    id: '1',
-    title: 'タスク1',
-    description: 'タスク1の説明',
-    expiredAt: '2021-10-10',
-    user: 'user1',
-  },
-  {
-    id: '2',
-    title: 'タスク2',
-    description: 'タスク2の説明',
-    expiredAt: '2021-10-10',
-    user: 'user2',
-  },
-  {
-    id: '3',
-    title: 'タスク3',
-    description: 'タスク3の説明',
-    expiredAt: '2021-10-10',
-    user: 'user3',
-  },
-]
 export default ProposalList;

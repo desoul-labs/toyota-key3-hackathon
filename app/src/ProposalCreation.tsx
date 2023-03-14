@@ -17,22 +17,30 @@ import { useNavigate } from "react-router-dom";
 import AddIcon from '@mui/icons-material/Add';
 import { ArrowBack } from "@mui/icons-material";
 
+interface Proposal {
+  id: string;
+  title: string;
+  description: string;
+  options: string[];
+  expiredAt: string;
+}
+
 function ProposalCreation() {
   const [open, setOpen] = useState(false)
-  const [title, setTitle] = useState<string>('')
-  const [description, setDescription] = useState<string>('')
+  const [id, setId] = useState<string>("0")
+  const [title, setTitle] = useState<string>("")
+  const [description, setDescription] = useState<string>("")
   const [loading, setLoading] = useState(true)
   const [contract, setContract] = useState<ContractPromise>()
-  const [user, setUser] = useState<string>('')
+  const [user, setUser] = useState<string>("")
   const [successMsg, setSuccessMsg] = useState('');
   const [timeValue, setTimeValue] = useState<Dayjs | undefined>()
+  const [proposals, setProposals] = useState<Proposal[]>()
   const navigate = useNavigate();
 
   const handleClose = () => setOpen(false)
-  const createProposal = () => {
-    navigate('/proposal')
-  }
-  const [options, setOptions] = useState<string[]>(['']);
+
+  const [options, setOptions] = useState<string[]>([""]);
 
   const handleAddClicked = () => {
     setOptions([...options, ""]);
@@ -47,6 +55,31 @@ function ProposalCreation() {
   const BackButtonClicked = () => {
     navigate(`/proposal`);
   }
+
+  //Todo: need to update id(now is always 0)
+  const createProposal = async () => {
+    const proposal = {
+      id: id,
+      title: title,
+      description: description,
+      options: options,
+      user: localStorage.getItem('name'),
+      expiredAt: timeValue!.unix().toString()
+    }
+    const response = await fetch('https://toyota-hackathon.azurewebsites.net/api/CreateProposal', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(proposal)
+    })
+    if (response.status === 200) {
+      const newProposal = proposals === undefined ? [proposal] : [...proposals, proposal];
+      setProposals(newProposal);
+    }
+    navigate('/proposal')
+  }
+
   return (
     <div className="flex items-center justify-center h-full">
       <div className="relative w-full sm:w-1/2 bg-white rounded-md p-8">
