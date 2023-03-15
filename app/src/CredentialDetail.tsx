@@ -3,15 +3,15 @@ import { useNavigate } from "react-router-dom";
 import Avatar from 'react-avatar';
 function CredentialDetail() {
   const navigate = useNavigate();
+  const first = localStorage.getItem("name")
 
   useEffect(() => {
-    const first = localStorage.getItem("name")
     if (first === null) {
       navigate("/credential/creation")
     }
-  }, [navigate])
+  }, [first, navigate])
 
-  return (
+  return first ? (
     <div className="flex justify-center items-center m-1 mt-5">
       <div className="border-gray-500 border-2 rounded-lg p-8 flex flex-col items-center">
         <h2 className="text-xl font-bold mb-6 text-center">株式会社123</h2>
@@ -53,7 +53,7 @@ function CredentialDetail() {
         </div>
       </div>
     </div >
-  );
+  ) : null
 }
 
 export default CredentialDetail;
