@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Avatar, Box, Button, Divider, Input, List, ListItem, ListItemAvatar, ListItemText, Modal, Typography, OutlinedInput, InputAdornment, IconButton } from "@mui/material";
 import Person2Icon from '@mui/icons-material/Person2';
 import AccessAlarmIcon from '@mui/icons-material/AccessAlarm';
 import CloseIcon from '@mui/icons-material/Close';
+import { useTaskContract } from './hooks/useContracts';
+import { Keyring } from '@polkadot/api';
 
 interface Props {
   item: {
@@ -27,18 +29,36 @@ const style = {
   p: 4,
 };
 
+const TASK_CONTRACT_ADDR = 'Z9hGfS7gvyvPLjAMne9qkJjmgS9EPbktxrmVz17nc6sypXE';
+
 function TaskItem({ item }: Props) {
-  const buttonContent: Record<number, string> = {
-    0: '',
-    1: '自分が担当',
-    2: '評価',
-    3: '完成する',
-    4: '評価済み',
-    5: '完成済み',
-  }
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
+  const [taskCompleted, setTaskCompleted] = useState(false);
+  const handleClose = async () => {
+    setOpen(false)
+    const keyring = new Keyring({ type: 'sr25519' });
+    const alice = keyring.addFromUri('//Eve', { name: 'Alice default' });
+    const owner = await getOwnerOfTask(alice, parseInt(item.id));
+    console.log(owner)
+
+  };
+  const [owner, setOwner] = useState<string>('');
+  const { getOwnerOfTask, isTaskCompleted } = useTaskContract();
+  useEffect(() => {
+
+    const checkTaskCompleted = async () => {
+      //Alice, Bob, Charlie, Dave, Eve and Ferdie
+      const keyring = new Keyring({ type: 'sr25519' });
+      const alice = keyring.addFromUri('//Eve', { name: 'Alice default' });
+      const result = await isTaskCompleted(alice, parseInt(item.id));
+      setTaskCompleted(result as boolean)
+      const owner = await getOwnerOfTask(alice, parseInt(item.id));
+      setOwner(owner as string);
+      console.log(owner)
+    }
+    checkTaskCompleted();
+  }, [])
   return (
     <>
       <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
@@ -64,16 +84,23 @@ function TaskItem({ item }: Props) {
                 }
               />
             </div>
-            {(item.status > 0 && item.status <= 4) &&
+            {owner === TASK_CONTRACT_ADDR ?
               <Button
                 variant="outlined"
                 // disabled={item.status === 4 || item.status === 5}
                 className="bg-blue-500 text-white font-bold py-2 px-4 rounded h-10"
                 onClick={handleOpen}
               >
-                {buttonContent[item.status]}
-              </Button>
-            }
+                自分が担当
+              </Button> :
+              <Button
+                variant="outlined"
+                // disabled={item.status === 4 || item.status === 5}
+                className="bg-blue-500 text-white font-bold py-2 px-4 rounded h-10"
+                onClick={handleOpen}
+              >
+                評価
+              </Button>}
           </div>
         </ListItem >
         <Divider sx={{ borderBottomWidth: 1, backgroundColor: "black" }} component="li" />

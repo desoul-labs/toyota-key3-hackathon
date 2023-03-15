@@ -14,6 +14,9 @@ import { WeightV2 } from '@polkadot/types/interfaces';
 import { Keyring } from '@polkadot/api';
 import BN from "bn.js";
 import { u64 } from '@polkadot/types';
+import { u8aToBn } from '@polkadot/util';
+import { useTaskContract } from './hooks/useContracts';
+
 interface item {
   id: string;
   title: string;
@@ -40,7 +43,7 @@ function TaskList() {
 
   const [timeValue, setTimeValue] = useState<Dayjs | undefined>()
   const { api, apiReady } = useContext(ApiContext);
-
+  const { createTask, getTaskCount, getOwnerOfTask } = useTaskContract();
   const handleClose = () => setOpen(false)
   const TaskCreationClicked = () => {
     setOpen(true)
@@ -70,7 +73,7 @@ function TaskList() {
     console.log(test)
   }, [api, apiReady]);
 
-  const createTask = async () => {
+  const CreateTask = async () => {
     setSuccessMsg('');
     if (!api || !apiReady) {
       console.log('The API is not ready');
@@ -82,66 +85,54 @@ function TaskList() {
       return;
     }
 
-    setLoading(true);
+    // setLoading(true);
     //Alice, Bob, Charlie, Dave, Eve and Ferdie
     const keyring = new Keyring({ type: 'sr25519' });
     const alice = keyring.addFromUri('//Eve', { name: 'Alice default' });
+    const blockTime = await (await api.query.timestamp.now()).toString();
+    const expiredTime = timeValue!.unix()
+    const nowUnixTime = dayjs().unix();
+    const deadline = expiredTime - nowUnixTime + parseInt(blockTime)
+    const taskNumber = await getTaskCount(alice);
+    console.log((taskNumber as any).Ok.data.toString())
+    const test = (taskNumber as any).Ok.data.toString()
+    // const bnValue = u8aToBn((taskNumber as any).Ok.data)
+    // console.log(bnValue)
+    // const binaryValue = bnValue.toString(2);
+    // console.log(binaryValue)
+    // const decimalValue = parseInt(binaryValue, 2);
+    // console.log(decimalValue)
+    // const test1 = 123
+    // cosnt test2 = test1.toString()
+    // const test = (taskNumber as any).Ok.data
+    // console.log(new BN(test.toString(), 16))
+    // console.log(parseInt((taskNumber as any).Ok.data), 16);
+    // console.log(new BN(test, 16))
+    const num = new BN('08000000000000000000000000000000', 16);
+    console.log(num.toString());
+    // const res = await createTask(alice, deadline)
 
-    let deadline: u64;
-    api.query.timestamp.now().then((blockTime1: any) => {
-      deadline = api.registry.createType('u64', blockTime1.toNumber());
-    })
-    // Todo: calculate deadline (blocktime + unix time)
-    const unsub = await contract.tx
-      .createTask(
-        // deadline as any,
-        {
-          gasLimit: api.registry.createType('WeightV2', {
-            refTime: 3951114240,
-            proofSize: 629760,
-          }) as WeightV2
-        },
-      )
-      .signAndSend(alice, (res: any) => {
-        if (res.status.isInBlock) {
-          console.log('in a block');
-        }
-        if (res.status.isFinalized) {
-          setLoading(false);
-          const today = new Date();
-          const twoYearsLater = new Date(today.getFullYear() + 2, today.getMonth(), today.getDate());
-          localStorage.setItem('expiredAt', twoYearsLater.toISOString());
-          setSuccessMsg('Success!');
-          console.log('finalized');
-          res.events.forEach((record: any) => {
-            const { event } = record;
-            console.log('event', event.toHuman());
-          });
-        }
-      })
 
-    if (successMsg !== '') {
-      const task: item = {
-        id: '4',
-        title: title,
-        description: description,
-        expiredAt: timeValue!.unix().toString(),
-        status: 0
-      }
 
-      const response = await fetch('https://toyota-hackathon.azurewebsites.net/api/CreateTask', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(task)
-      })
-      if (response.status === 200) {
-        const newTasks = tasks === undefined ? [task] : [...tasks, task];
-        setTasks(newTasks);
-      }
-    }
+    // const task: item = {
+    //   id: '1',
+    //   title: title,
+    //   description: description,
+    //   expiredAt: timeValue!.unix().toString(),
+    //   status: 0
+    // }
 
+    // const response = await fetch('https://toyota-hackathon.azurewebsites.net/api/CreateTask', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //   },
+    //   body: JSON.stringify(task)
+    // })
+    // if (response.status === 200) {
+    //   const newTasks = tasks === undefined ? [task] : [...tasks, task];
+    //   setTasks(newTasks);
+    // }
     setOpen(false)
   }
 
@@ -222,7 +213,7 @@ function TaskList() {
                   />
                 </DemoContainer>
               </LocalizationProvider>
-              <Button variant="contained" onClick={() => createTask()}>タスクを追加</Button>
+              <Button variant="contained" onClick={() => CreateTask()}>タスクを追加</Button>
             </div>
           </div>
         </div>

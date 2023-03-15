@@ -168,7 +168,12 @@ export function useTaskContract() {
       return;
     }
 
-    const total = await contract.query.totalSupply(signer.address, { gasLimit: -1 });
+    const total = await contract.query["psp34::totalSupply"](signer.address, {
+      gasLimit: api?.registry.createType('WeightV2', {
+        refTime: 6165514785,
+        proofSize: 867985,
+      }) as WeightV2,
+    });
     return total.result.toHuman();
   }
 
@@ -178,7 +183,11 @@ export function useTaskContract() {
       return;
     }
 
-    const owner = await contract.query.ownerOf(signer.address, { gasLimit: -1 }, id);
+    const owner = await contract.query["psp34::ownerOf"](signer.address, {
+      gasLimit: api?.registry.createType('WeightV2', {
+        refTime: 6165514785,
+        proofSize: 867985,
+      }) as WeightV2, }, id);
     return owner.result.toHuman();
   }
 
@@ -188,7 +197,11 @@ export function useTaskContract() {
       return;
     }
 
-    const isCompleted = await contract.query.isCompleted(signer.address, { gasLimit: -1 }, id);
+    const isCompleted = await contract.query.isCompleted(signer.address, {
+      gasLimit: api?.registry.createType('WeightV2', {
+        refTime: 6165514785,
+        proofSize: 867985,
+      }) as WeightV2, }, id);
     return isCompleted.result.toHuman();
   }
 

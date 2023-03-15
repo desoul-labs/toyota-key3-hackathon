@@ -64,7 +64,7 @@ function CredentialCreation() {
     setLoading(true);
     //Alice, Bob, Charlie, Dave, Eve and Ferdie
     const keyring = new Keyring({ type: 'sr25519' });
-    const alice = keyring.addFromUri('//Eve', { name: 'Alice default' });
+    const alice = keyring.addFromUri('//Ferdie', { name: 'Alice default' });
     const unsub = await contract.tx
       .mintToken({
         gasLimit: api.registry.createType('WeightV2', {
@@ -87,7 +87,6 @@ function CredentialCreation() {
           const twoYearsLater = new Date(today.getFullYear() + 2, today.getMonth(), today.getDate());
           localStorage.setItem('expiredAt', twoYearsLater.toISOString());
           setSuccessMsg('Success!');
-          setTimeout(() => navigate('/'), 1000);
           console.log('finalized');
           res.events.forEach((record: any) => {
             const { event } = record;
@@ -95,6 +94,27 @@ function CredentialCreation() {
           });
         }
       });
+    if (successMsg !== '') {
+      const sbt = {
+        id: '3',
+        name: name,
+        department: department,
+        skill: skill,
+        address: alice.address,
+        startedAt: new Date().toISOString(),
+        expiredAt: new Date(new Date().getFullYear() + 2, new Date().getMonth(), new Date().getDate()).toISOString(),
+      }
+      const response = await fetch('https://toyota-hackathon.azurewebsites.net/api/CreateSbt', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(sbt)
+      })
+      setTimeout(() => navigate('/'), 1000);
+    }
+
+
   };
 
   const handleClose = () => {
