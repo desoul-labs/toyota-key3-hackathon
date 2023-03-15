@@ -59,8 +59,6 @@ function CredentialCreation() {
       });
 
       setTimeout(() => navigate('/'), 1000);
-    }).catch((err) => {
-      console.log(err)
     });
 
     toast.promise(res, {
