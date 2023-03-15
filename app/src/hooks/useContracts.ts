@@ -251,6 +251,7 @@ export function useTaskContract() {
     getOwnerOfTask,
     isTaskCompleted,
     getTaskDeadline,
+    evaluateTask,
     getScore,
     getTotalScore,
   }
