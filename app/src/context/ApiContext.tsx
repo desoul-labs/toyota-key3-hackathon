@@ -1,9 +1,10 @@
 import '@polkadot/api-augment';
 import { ApiPromise, WsProvider } from '@polkadot/api';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Box, CircularProgress } from '@mui/material';
 
 export interface ApiContextType {
-  api: ApiPromise | undefined;
+  api: ApiPromise;
   apiReady: boolean;
 }
 
@@ -23,24 +24,22 @@ export function ApiContextProvider(
   const { children = null } = props;
   const [api, setApi] = useState<ApiPromise>();
   const [apiReady, setApiReady] = useState(false);
+  const provider = useMemo(() => new WsProvider(WS_PROVIDER), []);
 
   useEffect(() => {
-    const provider = new WsProvider(WS_PROVIDER);
-    setApiReady(false);
-    setApi(new ApiPromise({ provider }));
-  }, []);
+    new ApiPromise({ provider }).isReady.then((val) => {
+      setApiReady(true);
+      setApi(val);
+    });
+  }, [provider]);
 
-  useEffect(() => {
-    if (api) {
-      api.isReady.then(() => {
-        setApiReady(true);
-        console.log('API ready');
-      })
-        .catch((error) => {
-          console.error(error);
-        });
-    }
-  }, [api]);
+  if (!api) {
+    return (
+      <Box className="min-h-screen flex justify-center items-center">
+        <CircularProgress  />
+      </Box>
+    )
+  }
 
   return (
     <ApiContext.Provider value={{ api, apiReady }}>

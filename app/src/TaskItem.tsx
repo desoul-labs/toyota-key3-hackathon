@@ -1,20 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { Avatar, Box, Button, Divider, Input, List, ListItem, ListItemAvatar, ListItemText, Modal, Typography, OutlinedInput, InputAdornment, IconButton } from "@mui/material";
+import { Box, Button, Divider, Input, List, ListItem, ListItemAvatar, ListItemText, Modal, Typography, OutlinedInput, InputAdornment, IconButton } from "@mui/material";
 import Person2Icon from '@mui/icons-material/Person2';
 import AccessAlarmIcon from '@mui/icons-material/AccessAlarm';
 import CloseIcon from '@mui/icons-material/Close';
-import { useTaskContract } from './hooks/useContracts';
-import { Keyring } from '@polkadot/api';
+import { useTaskQuery } from './hooks/useContracts';
+import { useAccount } from "./hooks/useAccounts";
+import { Item } from "./types/task";
 
 interface Props {
-  item: {
-    id: string;
-    title: string;
-    description: string;
-    user?: string;
-    expiredAt: string;
-    status: 0 | 1 | 2;
-  };
+  item: Item;
 }
 
 const style = {
@@ -33,32 +27,28 @@ const TASK_CONTRACT_ADDR = 'Z9hGfS7gvyvPLjAMne9qkJjmgS9EPbktxrmVz17nc6sypXE';
 
 function TaskItem({ item }: Props) {
   const [open, setOpen] = useState(false);
-  const handleOpen = () => setOpen(true);
+  const { account } = useAccount('//Lily');
   const [taskCompleted, setTaskCompleted] = useState(false);
-  const handleClose = async () => {
-    setOpen(false)
-    const keyring = new Keyring({ type: 'sr25519' });
-    const alice = keyring.addFromUri('//Eve', { name: 'Alice default' });
-    const owner = await getOwnerOfTask(alice, parseInt(item.id));
-    console.log(owner)
-
-  };
   const [owner, setOwner] = useState<string>('');
-  const { getOwnerOfTask, isTaskCompleted } = useTaskContract();
-  useEffect(() => {
+  const { getOwnerOfTask, isTaskCompleted } = useTaskQuery(account.address);
 
+  useEffect(() => {
     const checkTaskCompleted = async () => {
-      //Alice, Bob, Charlie, Dave, Eve and Ferdie
-      const keyring = new Keyring({ type: 'sr25519' });
-      const alice = keyring.addFromUri('//Eve', { name: 'Alice default' });
-      const result = await isTaskCompleted(alice, parseInt(item.id));
+      const result = await isTaskCompleted(item.id);
       setTaskCompleted(result as boolean)
-      const owner = await getOwnerOfTask(alice, parseInt(item.id));
-      setOwner(owner as string);
-      console.log(owner)
+      const owner = await getOwnerOfTask(item.id);
+
+      if (owner) {
+        console.log('owner', owner.toString());
+        setOwner(owner.toString());
+      }
     }
     checkTaskCompleted();
-  }, [])
+  }, [getOwnerOfTask, isTaskCompleted, item.id])
+
+  const handleClose = () => setOpen(false);
+  const handleOpen = () => setOpen(true);
+
   return (
     <>
       <List sx={{ width: '100%', bgcolor: 'background.paper' }}>

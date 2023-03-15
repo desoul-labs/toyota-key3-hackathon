@@ -1,24 +1,18 @@
-import { useContext, useEffect, useState } from "react";
-import TaskItem from "./TaskItem";
-import dayjs, { Dayjs } from 'dayjs';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import { Box, Button, CircularProgress, Dialog, DialogTitle, IconButton, InputAdornment, Modal, OutlinedInput, TextField, Typography } from "@mui/material";
-import CloseIcon from '@mui/icons-material/Close';
+import { useState } from "react";
+import { Dayjs } from 'dayjs';
+import { Button, IconButton, InputAdornment, OutlinedInput, TextField, Typography } from "@mui/material";
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { ApiContext } from './context/ApiContext';
-import ABI from './task_manager/artifacts/task_manager.json';
-import { ContractPromise, Abi } from '@polkadot/api-contract';
-import { WeightV2 } from '@polkadot/types/interfaces';
-import { Keyring } from '@polkadot/api';
-import BN from "bn.js";
 import { useNavigate } from "react-router-dom";
 import AddIcon from '@mui/icons-material/Add';
 import { ArrowBack } from "@mui/icons-material";
+import { useProposalQuery, useProposalTx } from "./hooks/useContracts";
+import { useAccount } from "./hooks/useAccounts";
+import { toast } from 'react-toastify';
 
 interface Proposal {
-  id: string;
+  id: number;
   title: string;
   description: string;
   options: string[];
@@ -26,19 +20,14 @@ interface Proposal {
 }
 
 function ProposalCreation() {
-  const [open, setOpen] = useState(false)
-  const [id, setId] = useState<string>("0")
   const [title, setTitle] = useState<string>("")
   const [description, setDescription] = useState<string>("")
-  const [loading, setLoading] = useState(true)
-  const [contract, setContract] = useState<ContractPromise>()
-  const [user, setUser] = useState<string>("")
-  const [successMsg, setSuccessMsg] = useState('');
   const [timeValue, setTimeValue] = useState<Dayjs | undefined>()
   const [proposals, setProposals] = useState<Proposal[]>()
+  const { account } = useAccount('//Lily');
+  const { createProposal } = useProposalTx(account);
+  const { getProposalCount } = useProposalQuery(account.address);
   const navigate = useNavigate();
-
-  const handleClose = () => setOpen(false)
 
   const [options, setOptions] = useState<string[]>([""]);
 
@@ -56,28 +45,37 @@ function ProposalCreation() {
     navigate(`/proposal`);
   }
 
-  //Todo: need to update id(now is always 0)
-  const createProposal = async () => {
-    const proposal = {
-      id: id,
+  const handleSubmit = async () => {
+    const nextProposalId = await getProposalCount();
+    const proposal: Proposal = {
+      id: nextProposalId,
       title: title,
       description: description,
       options: options,
-      user: localStorage.getItem('name'),
       expiredAt: timeValue!.unix().toString()
     }
-    const response = await fetch('https://toyota-hackathon.azurewebsites.net/api/CreateProposal', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(proposal)
+
+    const res = createProposal(10000000000000, 5).then(async (res) => {
+      console.log(res)
+      const response = await fetch('https://toyota-hackathon.azurewebsites.net/api/CreateProposal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(proposal)
+      })
+      if (response.status === 200) {
+        const newProposal = proposals === undefined ? [proposal] : [...proposals, proposal];
+        setProposals(newProposal);
+      }
+      navigate('/proposal')
     })
-    if (response.status === 200) {
-      const newProposal = proposals === undefined ? [proposal] : [...proposals, proposal];
-      setProposals(newProposal);
-    }
-    navigate('/proposal')
+
+    toast.promise(res, {
+      pending: '提案を作成中...',
+      success: '提案を作成しました',
+      error: '提案の作成に失敗しました'
+    });
   }
 
   return (
@@ -140,7 +138,7 @@ function ProposalCreation() {
               <AddIcon className="mb-2" onClick={() => handleAddClicked()} />
             </div>
           </div>
-          <Button variant="contained" onClick={() => createProposal()}>提案を作成</Button>
+          <Button variant="contained" onClick={() => handleSubmit()}>提案を作成</Button>
         </div>
       </div>
     </div>

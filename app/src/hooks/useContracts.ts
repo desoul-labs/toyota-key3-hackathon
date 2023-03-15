@@ -1,5 +1,5 @@
 import { Abi, ContractPromise } from "@polkadot/api-contract";
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useMemo } from "react";
 import { ApiContext } from "../context/ApiContext";
 import SBT_ABI from '../sbt/artifacts/sbt.json';
 import { type KeyringPair } from '@polkadot/keyring/types'
@@ -7,7 +7,15 @@ import { type ApiPromise } from '@polkadot/api';
 import { type WeightV2 } from '@polkadot/types/interfaces';
 import TASK_ABI from '../task_manager/artifacts/task_manager.json';
 import PROPOSAL_ABI from '../proposal_manager/artifacts/proposal_manager.json';
-import { AccountId } from "../sbt/typedContract/types-arguments/sbt";
+import SBTQuery from "../sbt/typedContract/query/sbt";
+import SBTTx from "../sbt/typedContract/tx-sign-and-send/sbt";
+import TaskQuery from "../task_manager/typedContract/query/task_manager";
+import TaskTx from "../task_manager/typedContract/tx-sign-and-send/task_manager";
+import ProposalQuery from "../proposal_manager/typedContract/query/proposal_manager";
+import ProposalTx from "../proposal_manager/typedContract/tx-sign-and-send/proposal_manager";
+import { AccountId, Id } from "../sbt/typedContract/types-returns/sbt";
+import { IdBuilder } from "../sbt/typedContract/types-arguments/sbt";
+import { SignAndSendSuccessResponse } from "@727-ventures/typechain-types";
 
 const SBT_CONTRACT_ADDR = 'YXpfeRsSxi4mv4FhQ6fkqF6LdgTw8L36PcYvtZsoesBppwZ';
 const TASK_CONTRACT_ADDR = 'Z9hGfS7gvyvPLjAMne9qkJjmgS9EPbktxrmVz17nc6sypXE';
@@ -22,345 +30,407 @@ const createWeightV2 = (api: ApiPromise, refTime: number, proofSize: number) => 
   }
 }
 
-export function useSbtContract() {
-  const { api, apiReady } = useContext(ApiContext);
-  const [contract, setContract] = useState<ContractPromise>();
-
-  useEffect(() => {
-    if (!api || !apiReady) {
-      console.log('api is not ready');
-      return;
-    }
+export function useSbtQuery(caller: string) {
+  const { api } = useContext(ApiContext);
+  const queryStub = useMemo(() => {
     const abi = new Abi(SBT_ABI, api.registry.getChainProperties());
-    const ctr = new ContractPromise(api, abi, SBT_CONTRACT_ADDR);
-    setContract(ctr);
-  }, [api, apiReady]);
+    const contract = new ContractPromise(api, abi, SBT_CONTRACT_ADDR);
+    return new SBTQuery(contract, api, caller)
+  }, [api, caller]);
 
-  const mintToken = async (signer: KeyringPair) => {
-    if (!api || !contract) {
-      console.log('contract is not ready');
-      return;
-    }
-
-    const unsub = await contract.tx
-      .mintToken(createWeightV2(api, 3951114240, 629760))
-      .signAndSend(signer, (res) => {
-        if (res.isCompleted) {
-          console.log('completed');
-          Promise.resolve(res);
+  const ownersTokenByIndex = useCallback(async (owner: string, index: number) => {
+    return new Promise<Id>(async (resolve, reject) => {
+      const res = await queryStub
+        .ownersTokenByIndex(owner, index)
+        .then((ret) => ret.value);
+      if (res.err !== undefined) {
+        reject(res.err);
+      }
+      if (res.ok !== undefined) {
+        if (res.ok.err !== undefined) {
+          reject(res.ok.err);
         }
-        if (res.isError) {
-          console.log('error');
-          Promise.reject(res);
+        if (res.ok.ok !== undefined) {
+          resolve(res.ok.ok);
         }
-        unsub();
-      });
-  }
+      }
+    });
+  }, [queryStub]);
 
-  const ownersTokenByIndex = async (signer: KeyringPair, account: string, index: number) => {
-    if (!api || !contract) {
-      console.log('contract is not ready');
-      return;
-    }
+  const ownerOf = useCallback(async (id: number) => {
+    return new Promise<AccountId | null>(async (resolve, reject) => {
+      const res = await queryStub
+        .ownerOf(IdBuilder.U32(id))
+        .then((ret) => ret.value);
+      if (res.err !== undefined) {
+        reject(res.err);
+      }
+      if (res.ok !== undefined) {
+        resolve(res.ok);
+      }
+    });
+  }, [queryStub]);
 
-    const tokenId = await contract.query.ownersTokenByIndex(signer.address, { gasLimit: -1 }, account, index);
-    return tokenId.result.toHuman();
-  }
-
-  const ownerOf = async (signer: KeyringPair, tokenId: number) => {
-    if (!api || !contract) {
-      console.log('contract is not ready');
-      return;
-    }
-
-    const owner = await contract.query.ownerOf(signer.address, { gasLimit: -1 }, tokenId);
-    return owner.result.toHuman();
-  }
+  const totalSupply = useCallback(async () => {
+    return new Promise<number>(async (resolve, reject) => {
+      const res = await queryStub
+        .totalSupply()
+        .then((ret) => ret.value);
+      if (res.err !== undefined) {
+        reject(res.err);
+      }
+      if (res.ok !== undefined) {
+        resolve(res.ok.toNumber());
+      }
+    });
+  }, [queryStub]);
 
   return {
-    mintToken,
     ownersTokenByIndex,
     ownerOf,
+    totalSupply,
   }
 }
 
-export function useTaskContract() {
-  const { api, apiReady } = useContext(ApiContext);
-  const [contract, setContract] = useState<ContractPromise>();
+export function useSbtTx(signer: KeyringPair) {
+  const { api } = useContext(ApiContext);
+  const txStub = useMemo(() => {
+    const abi = new Abi(SBT_ABI, api.registry.getChainProperties());
+    const contract = new ContractPromise(api, abi, SBT_CONTRACT_ADDR);
+    return new SBTTx(api, contract, signer)
+  }, [api, signer]);
 
-  useEffect(() => {
-    if (!api || !apiReady) {
-      console.log('api is not ready');
-      return;
-    }
-    const abi = new Abi(TASK_ABI, api.registry.getChainProperties());
-    const ctr = new ContractPromise(api, abi, TASK_CONTRACT_ADDR);
-    setContract(ctr);
-  }, [api, apiReady]);
-
-  const createTask = async (signer: KeyringPair, deadline: number) => {
-    if (!api || !contract) {
-      console.log('contract is not ready');
-      return;
-    }
-
-    const unsub = await contract.tx
-      .createTask(createWeightV2(api, 6164667490, 867985), deadline)
-      .signAndSend(signer, (res) => {
-        if (res.isCompleted) {
-          console.log('completed');
-          Promise.resolve(res);
-        }
-        if (res.isError) {
-          console.log('error');
-          Promise.reject(res);
-        }
-        unsub();
-      });
-  }
-
-  const takeTask = async (signer: KeyringPair, id: number) => {
-    if (!api || !contract) {
-      console.log('contract is not ready');
-      return;
-    }
-
-    const unsub = await contract.tx
-      .takeTask(createWeightV2(api, 6166686531, 867985), id)
-      .signAndSend(signer, (res) => {
-        if (res.isCompleted) {
-          console.log('completed');
-          Promise.resolve(res);
-        }
-        if (res.isError) {
-          console.log('error');
-          Promise.reject(res);
-        }
-        unsub();
-      });
-  }
-
-  const completeTask = async (signer: KeyringPair, id: number) => {
-    if (!api || !contract) {
-      console.log('contract is not ready');
-      return;
-    }
-
-    const unsub = await contract.tx
-      .completeTask(createWeightV2(api, 6165514785, 867985), id)
-      .signAndSend(signer, (res) => {
-        if (res.isCompleted) {
-          console.log('completed');
-          Promise.resolve(res);
-        }
-        if (res.isError) {
-          console.log('error');
-          Promise.reject(res);
-        }
-        unsub();
-      }
-      );
-  }
-
-  const getTaskCount = async (signer: KeyringPair) => {
-    if (!api || !contract) {
-      console.log('contract is not ready');
-      return;
-    }
-
-    const total = await contract.query["psp34::totalSupply"](signer.address, {
-      gasLimit: api?.registry.createType('WeightV2', {
-        refTime: 6165514785,
-        proofSize: 867985,
-      }) as WeightV2,
+  const mintToken = useCallback(async () => {
+    return new Promise<SignAndSendSuccessResponse>(async (resolve, reject) => {
+      await txStub
+        .mintToken(createWeightV2(api, 3951114240, 629760))
+        .then(
+          (val) => {
+            if (val.error !== undefined) {
+              reject(val.error);
+              return;
+            }
+            resolve(val);
+          },
+          (err) => {
+            console.log(err);
+            reject(err);
+          }
+        );
     });
-    return total.result.toHuman();
-  }
-
-  const getOwnerOfTask = async (signer: KeyringPair, id: number) => {
-    if (!api || !contract) {
-      console.log('contract is not ready');
-      return;
-    }
-
-    const owner = await contract.query["psp34::ownerOf"](signer.address, {
-      gasLimit: api?.registry.createType('WeightV2', {
-        refTime: 6165514785,
-        proofSize: 867985,
-      }) as WeightV2, }, id);
-    return owner.result.toHuman();
-  }
-
-  const isTaskCompleted = async (signer: KeyringPair, id: number) => {
-    if (!api || !contract) {
-      console.log('contract is not ready');
-      return;
-    }
-
-    const isCompleted = await contract.query.isCompleted(signer.address, {
-      gasLimit: api?.registry.createType('WeightV2', {
-        refTime: 6165514785,
-        proofSize: 867985,
-      }) as WeightV2, }, id);
-    return isCompleted.result.toHuman();
-  }
-
-  const getTaskDeadline = async (signer: KeyringPair, id: number) => {
-    if (!api || !contract) {
-      console.log('contract is not ready');
-      return;
-    }
-
-    const deadline = await contract.query.getDeadline(signer.address, { gasLimit: -1 }, id);
-    return deadline.result.toHuman();
-  }
-
-  const getScore = async (signer: KeyringPair, account: AccountId) => {
-    if (!api || !contract) {
-      console.log('contract is not ready');
-      return;
-    }
-
-    const score = await contract.query.getScore(signer.address, { gasLimit: -1 }, account);
-    return score.result.toHuman();
-  }
-
-  const getTotalScore = async (signer: KeyringPair) => {
-    if (!api || !contract) {
-      console.log('contract is not ready');
-      return;
-    }
-
-    const score = await contract.query.getTotalScore(signer.address, { gasLimit: -1 });
-    return score.result.toHuman();
-  }
-
-  const evaluateTask = async (signer: KeyringPair, id: number, score: number) => {
-    if (!api || !contract) {
-      console.log('contract is not ready');
-      return;
-    }
-
-    const unsub = await contract.tx
-      .evaluateTask(createWeightV2(api, 6168911293, 867985), id, score)
-      .signAndSend(signer, (res) => {
-        if (res.isCompleted) {
-          console.log('completed');
-          Promise.resolve(res);
-        }
-        if (res.isError) {
-          console.log('error');
-          Promise.reject(res);
-        }
-        unsub();
-      });
-  }
+  }, [api, txStub]);
 
   return {
-    createTask,
-    takeTask,
-    completeTask,
+    mintToken,
+  }
+}
+
+export function useTaskQuery(caller: string) {
+  const { api } = useContext(ApiContext);
+  const queryStub = useMemo(() => {
+    const abi = new Abi(TASK_ABI, api.registry.getChainProperties());
+    const contract = new ContractPromise(api, abi, TASK_CONTRACT_ADDR);
+    return new TaskQuery(contract, api, caller)
+  }, [api, caller]);
+
+  const getTaskCount = useCallback(async () => {
+    return new Promise<number>(async (resolve, reject) => {
+      const res = await queryStub
+        .totalSupply()
+        .then((ret) => ret.value);
+      if (res.err !== undefined) {
+        reject(res.err);
+      }
+      if (res.ok !== undefined) {
+        resolve(res.ok.toNumber());
+      }
+    });
+  }, [queryStub]);
+
+
+  const getOwnerOfTask = useCallback(async (id: number) => {
+    return new Promise<AccountId | null>(async (resolve, reject) => {
+      const res = await queryStub
+        .ownerOf(IdBuilder.U32(id))
+        .then((ret) => ret.value);
+      if (res.err !== undefined) {
+        reject(res.err);
+      }
+      if (res.ok !== undefined) {
+        resolve(res.ok);
+      }
+    });
+  }, [queryStub]);
+
+  const isTaskCompleted = useCallback(async (id: number) => {
+    return new Promise<boolean>(async (resolve, reject) => {
+      const res = await queryStub
+        .isCompleted(IdBuilder.U32(id))
+        .then((ret) => ret.value);
+      if (res.err !== undefined) {
+        reject(res.err);
+      }
+      if (res.ok !== undefined) {
+        resolve(res.ok);
+      }
+    });
+  }, [queryStub]);
+
+  const getTaskDeadline = useCallback(async (id: number) => {
+    return new Promise<number>(async (resolve, reject) => {
+      const res = await queryStub
+        .getDeadline(IdBuilder.U32(id))
+        .then((ret) => ret.value);
+      if (res.err !== undefined) {
+        reject(res.err);
+      }
+      if (res.ok !== undefined) {
+        resolve(res.ok);
+      }
+    });
+  }, [queryStub]);
+
+  const getScore = useCallback(async (account: AccountId) => {
+    return new Promise<number>(async (resolve, reject) => {
+      const res = await queryStub
+        .getScore(account)
+        .then((ret) => ret.value);
+      if (res.err !== undefined) {
+        reject(res.err);
+      }
+      if (res.ok !== undefined) {
+        resolve(res.ok);
+      }
+    });
+  }, [queryStub]);
+
+  const getTotalScore = useCallback(async () => {
+    return new Promise<number>(async (resolve, reject) => {
+      const res = await queryStub
+        .getTotalScore()
+        .then((ret) => ret.value);
+      if (res.err !== undefined) {
+        reject(res.err);
+      }
+      if (res.ok !== undefined) {
+        resolve(res.ok);
+      }
+    });
+  }, [queryStub]);
+
+  return {
     getTaskCount,
     getOwnerOfTask,
     isTaskCompleted,
     getTaskDeadline,
-    evaluateTask,
     getScore,
     getTotalScore,
   }
 }
 
-export function useProposalContract() {
-  const { api, apiReady } = useContext(ApiContext);
-  const [contract, setContract] = useState<ContractPromise>();
+export function useTaskTx(signer: KeyringPair) {
+  const { api } = useContext(ApiContext);
+  const txStub = useMemo(() => {
+    const abi = new Abi(TASK_ABI, api.registry.getChainProperties());
+    const contract = new ContractPromise(api, abi, TASK_CONTRACT_ADDR);
+    return new TaskTx(api, contract, signer)
+  }, [api, signer]);
 
-  useEffect(() => {
-    if (!api || !apiReady) {
-      console.log('api is not ready');
-      return;
-    }
+  const createTask = useCallback(async (deadline: number) => {
+    return new Promise<SignAndSendSuccessResponse>(async (resolve, reject) => {
+      await txStub
+        .createTask(deadline, createWeightV2(api, 6164667490, 867985))
+        .then(
+          (val) => {
+            if (val.error !== undefined) {
+              reject(val.error);
+              return;
+            }
+            resolve(val);
+          },
+          (err) => {
+            console.log(err);
+            reject(err);
+          },
+        );
+    });
+  }, [api, txStub]);
+
+  const takeTask = useCallback(async (id: number) => {
+    return new Promise<SignAndSendSuccessResponse>(async (resolve, reject) => {
+      await txStub
+        .takeTask(IdBuilder.U32(id), createWeightV2(api, 6166686531, 867985))
+        .then(
+          (val) => {
+            if (val.error !== undefined) {
+              reject(val.error);
+              return;
+            }
+            resolve(val);
+          },
+          (err) => {
+            console.log(err);
+            reject(err);
+          }
+        );
+    });
+  }, [api, txStub]);
+
+  const completeTask = useCallback(async (id: number) => {
+    return new Promise<SignAndSendSuccessResponse>(async (resolve, reject) => {
+      await txStub
+        .completeTask(IdBuilder.U32(id), createWeightV2(api, 6165514785, 867985))
+        .then(
+          (val) => {
+            if (val.error !== undefined) {
+              reject(val.error);
+              return;
+            }
+            resolve(val);
+          },
+          (err) => {
+            console.log(err);
+            reject(err);
+          }
+        );
+    });
+  }, [api, txStub]);
+
+  const evaluateTask = useCallback(async (id: number, score: number) => {
+    return new Promise<SignAndSendSuccessResponse>(async (resolve, reject) => {
+      await txStub
+        .evaluateTask(IdBuilder.U32(id), score, createWeightV2(api, 6168911293, 867985))
+        .then(
+          (val) => {
+            if (val.error !== undefined) {
+              reject(val.error);
+              return;
+            }
+            resolve(val);
+          },
+          (err) => {
+            console.log(err);
+            reject(err);
+          }
+        );
+    });
+  }, [api, txStub]);
+
+  return {
+    createTask,
+    takeTask,
+    completeTask,
+    evaluateTask,
+  }
+}
+
+export function useProposalQuery(caller: string) {
+  const { api } = useContext(ApiContext);
+  const queryStub = useMemo(() => {
     const abi = new Abi(PROPOSAL_ABI, api.registry.getChainProperties());
-    const ctr = new ContractPromise(api, abi, PROPOSAL_CONTRACT_ADDR);
-    setContract(ctr);
-  }, [api, apiReady]);
+    const contract = new ContractPromise(api, abi, PROPOSAL_CONTRACT_ADDR);
+    return new ProposalQuery(contract, api, caller);
+  }, [api, caller]);
 
-  const createProposal = async (signer: KeyringPair, deadline: number, optionCount: number) => {
-    if (!api || !contract) {
-      console.log('contract is not ready');
-      return;
-    }
+  const getProposalCount = useCallback(async () => {
+    return new Promise<number>(async (resolve, reject) => {
+      const res = await queryStub
+        .totalSupply()
+        .then((ret) => ret.value);
+      if (res.err !== undefined) {
+        reject(res.err);
+      }
+      if (res.ok !== undefined) {
+        resolve(res.ok.toNumber());
+      }
+    });
+  }, [queryStub]);
 
-    const unsub = await contract.tx
-      .createProposal(createWeightV2(api, 6289762248, 904461), deadline, optionCount)
-      .signAndSend(signer, (res) => {
-        if (res.isCompleted) {
-          console.log('completed');
-          Promise.resolve(res);
-        }
-        if (res.isError) {
-          console.log('error');
-          Promise.reject(res);
-        }
-        unsub();
-      });
+  const getProposal = useCallback(async (id: number) => {
+    return new Promise<number[]>(async (resolve, reject) => {
+      const res = await queryStub
+        .getProposal(IdBuilder.U32(id))
+        .then((ret) => ret.value);
+      if (res.err !== undefined) {
+        reject(res.err);
+      }
+      if (res.ok !== undefined) {
+        resolve(res.ok);
+      }
+    });
+  }, [queryStub]);
+
+  const getCreatorOfProposal = useCallback(async (id: number) => {
+    return new Promise<AccountId | null>(async (resolve, reject) => {
+      const res = await queryStub
+        .ownerOf(IdBuilder.U32(id))
+        .then((ret) => ret.value);
+      if (res.err !== undefined) {
+        reject(res.err);
+      }
+      if (res.ok !== undefined) {
+        resolve(res.ok);
+      }
+    });
+  }, [queryStub]);
+
+  return {
+    getProposalCount,
+    getProposal,
+    getCreatorOfProposal,
   }
+}
 
-  const voteProposal = async (signer: KeyringPair, id: number, votes: number[]) => {
-    if (!api || !contract) {
-      console.log('contract is not ready');
-      return;
-    }
+export function useProposalTx(signer: KeyringPair) {
+  const { api } = useContext(ApiContext);
+  const txStub = useMemo(() => {
+    const abi = new Abi(PROPOSAL_ABI, api.registry.getChainProperties());
+    const contract = new ContractPromise(api, abi, PROPOSAL_CONTRACT_ADDR);
+    return new ProposalTx(api, contract, signer);
+  }, [api, signer]);
 
-    const unsub = await contract.tx
-      .voteProposal(createWeightV2(api, 6309578895, 904461), id, votes)
-      .signAndSend(signer, (res) => {
-        if (res.isCompleted) {
-          console.log('completed');
-          Promise.resolve(res);
-        }
-        if (res.isError) {
-          console.log('error');
-          Promise.reject(res);
-        }
-        unsub();
-      });
-  }
+  const createProposal = useCallback(async (deadline: number, optionCount: number) => {
+    return new Promise<SignAndSendSuccessResponse>(async (resolve, reject) => {
+      await txStub
+        .createProposal(deadline, optionCount, createWeightV2(api, 6289762248, 904461))
+        .then(
+          (val) => {
+            if (val.error !== undefined) {
+              reject(val.error);
+              return;
+            }
+            resolve(val);
+          },
+          (err) => {
+            console.log(err);
+            reject(err);
+          }
+        );
+    });
+  }, [api, txStub]);
 
-  const getProposalCount = async (signer: KeyringPair) => {
-    if (!api || !contract) {
-      console.log('contract is not ready');
-      return;
-    }
-
-    const total = await contract.query.totalSupply(signer.address, { gasLimit: -1 });
-    return total.result.toHuman();
-  }
-
-  const getProposal = async (signer: KeyringPair, id: number) => {
-    if (!api || !contract) {
-      console.log('contract is not ready');
-      return;
-    }
-
-    const proposal = await contract.query.getProposal(signer.address, { gasLimit: -1 }, id);
-    return proposal.result.toHuman();
-  }
-
-  const getCreatorOfProposal = async (signer: KeyringPair, id: number) => {
-    if (!api || !contract) {
-      console.log('contract is not ready');
-      return;
-    }
-
-    const creator = await contract.query.ownerOf(signer.address, { gasLimit: -1 }, id);
-    return creator.result.toHuman();
-  }
+  const voteProposal = useCallback(async (id: number, votes: number[]) => {
+    return new Promise<SignAndSendSuccessResponse>(async (resolve, reject) => {
+      await txStub
+        .voteProposal(IdBuilder.U32(id), votes, createWeightV2(api, 6309578895, 904461))
+        .then(
+          (val) => {
+            if (val.error !== undefined) {
+              reject(val.error);
+              return;
+            }
+            resolve(val);
+          },
+          (err) => {
+            console.log(err);
+            reject(err);
+          }
+        );
+    });
+  }, [api, txStub]);
 
   return {
     createProposal,
     voteProposal,
-    getProposalCount,
-    getProposal,
-    getCreatorOfProposal,
   }
 }

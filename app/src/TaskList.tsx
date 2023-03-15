@@ -1,170 +1,102 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import TaskItem from "./TaskItem";
-import dayjs, { Dayjs } from 'dayjs';
+import { Dayjs } from 'dayjs';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import { Box, Button, CircularProgress, Dialog, DialogTitle, IconButton, Modal, OutlinedInput, TextField, Typography } from "@mui/material";
+import { Button, IconButton, Modal, OutlinedInput, TextField, Typography } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { ApiContext } from './context/ApiContext';
-import ABI from './task_manager/artifacts/task_manager.json';
-import { ContractPromise, Abi } from '@polkadot/api-contract';
-import { WeightV2 } from '@polkadot/types/interfaces';
-import { Keyring } from '@polkadot/api';
-import BN from "bn.js";
-import { u64 } from '@polkadot/types';
-import { u8aToBn } from '@polkadot/util';
-import { useTaskContract } from './hooks/useContracts';
-
-interface item {
-  id: string;
-  title: string;
-  description: string;
-  expiredAt: string;
-  user?: string;
-  status: 0 | 1 | 2; // 0: not started, 1: in progress, 2: completed
-};
-
-const timeTest = new BN(2_168_018_840_013)
-const address: string =
-  process.env.CONTRACT_ADDRESS ||
-  'Z9hGfS7gvyvPLjAMne9qkJjmgS9EPbktxrmVz17nc6sypXE';
+import { useTaskQuery, useTaskTx } from './hooks/useContracts';
+import { useAccount } from "./hooks/useAccounts";
+import { Item } from "./types/task";
+import { toast } from 'react-toastify';
 
 function TaskList() {
-  const [tasks, setTasks] = useState<item[]>()
+  const [tasks, setTasks] = useState<Item[]>()
   const [open, setOpen] = useState(false)
+  const [score, setScore] = useState<number>(0)
   const [title, setTitle] = useState<string>('')
   const [description, setDescription] = useState<string>('')
-  const [loading, setLoading] = useState(true)
-  const [contract, setContract] = useState<ContractPromise>()
   const [user, setUser] = useState<string>('')
-  const [successMsg, setSuccessMsg] = useState('');
-
   const [timeValue, setTimeValue] = useState<Dayjs | undefined>()
-  const { api, apiReady } = useContext(ApiContext);
-  const { createTask, getTaskCount, getOwnerOfTask } = useTaskContract();
-  const handleClose = () => setOpen(false)
-  const TaskCreationClicked = () => {
-    setOpen(true)
-  }
+
+  const { account } = useAccount('//Lily');
+  const { getTaskCount, getOwnerOfTask, getScore, getTaskDeadline } = useTaskQuery(account.address);
+  const { createTask } = useTaskTx(account);
 
   useEffect(() => {
     const fetchData = async () => {
       const response = await fetch('https://toyota-hackathon.azurewebsites.net/api/GetTasks');
-      const data = await response.json();
-      console.log(data)
+      const data = await response.json() as Item[];
       setTasks(data);
     }
+
     fetchData()
-  }, [])
+  }, [getOwnerOfTask]);
 
   useEffect(() => {
-    if (!api || !apiReady) {
-      console.log('api is not ready');
-      return;
-    }
-    const abi = new Abi(ABI, api.registry.getChainProperties());
-    const contract = new ContractPromise(api, abi, address);
-    setLoading(false);
-    setContract(contract);
-    console.log(contract)
-    const test = api?.query.timestamp.now()
-    console.log(test)
-  }, [api, apiReady]);
-
-  const CreateTask = async () => {
-    setSuccessMsg('');
-    if (!api || !apiReady) {
-      console.log('The API is not ready');
-      return;
+    const fetchScore = async () => {
+      const score = await getScore(account.address)
+      setScore(score)
     }
 
-    if (!contract) {
-      console.log('no contract');
-      return;
+    fetchScore()
+  }, [account, getScore]);
+
+  const handleClose = () => setOpen(false)
+
+  const handleSubmit = async () => {
+    const nextTaskId = await getTaskCount();
+    console.log(nextTaskId);
+
+    const task: Item = {
+      id: nextTaskId,
+      title: title,
+      description: description,
+      expiredAt: timeValue!.unix().toString(),
+      status: 0
     }
 
-    // setLoading(true);
-    //Alice, Bob, Charlie, Dave, Eve and Ferdie
-    const keyring = new Keyring({ type: 'sr25519' });
-    const alice = keyring.addFromUri('//Eve', { name: 'Alice default' });
-    const blockTime = await (await api.query.timestamp.now()).toString();
-    const expiredTime = timeValue!.unix()
-    const nowUnixTime = dayjs().unix();
-    const deadline = expiredTime - nowUnixTime + parseInt(blockTime)
-    const taskNumber = await getTaskCount(alice);
-    console.log((taskNumber as any).Ok.data.toString())
-    const test = (taskNumber as any).Ok.data.toString()
-    // const bnValue = u8aToBn((taskNumber as any).Ok.data)
-    // console.log(bnValue)
-    // const binaryValue = bnValue.toString(2);
-    // console.log(binaryValue)
-    // const decimalValue = parseInt(binaryValue, 2);
-    // console.log(decimalValue)
-    // const test1 = 123
-    // cosnt test2 = test1.toString()
-    // const test = (taskNumber as any).Ok.data
-    // console.log(new BN(test.toString(), 16))
-    // console.log(parseInt((taskNumber as any).Ok.data), 16);
-    // console.log(new BN(test, 16))
-    const num = new BN('08000000000000000000000000000000', 16);
-    console.log(num.toString());
-    // const res = await createTask(alice, deadline)
+    const res = createTask(10000000000000).then(async (res) => {
+      console.log(res)
 
+      const response = await fetch('https://toyota-hackathon.azurewebsites.net/api/CreateTask', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(task)
+      })
+      if (response.status === 200) {
+        const newTasks = tasks === undefined ? [task] : [...tasks, task];
+        setTasks(newTasks);
+        setOpen(false)
+      }
+    });
 
-
-    // const task: item = {
-    //   id: '1',
-    //   title: title,
-    //   description: description,
-    //   expiredAt: timeValue!.unix().toString(),
-    //   status: 0
-    // }
-
-    // const response = await fetch('https://toyota-hackathon.azurewebsites.net/api/CreateTask', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //   },
-    //   body: JSON.stringify(task)
-    // })
-    // if (response.status === 200) {
-    //   const newTasks = tasks === undefined ? [task] : [...tasks, task];
-    //   setTasks(newTasks);
-    // }
-    setOpen(false)
+    toast.promise(res, {
+      pending: 'タスクを作成中です',
+      success: 'タスクを作成しました',
+      error: 'タスクの作成に失敗しました'
+    });
   }
 
   return (
     <div>
-      <Dialog onClose={handleClose} open={loading}>
-        <DialogTitle>Please wait</DialogTitle>
-        <Box
-          sx={{
-            width: '250px',
-            height: '250px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <CircularProgress />
-        </Box>
-      </Dialog>
       <div className="flex justify-between items-center px-4 py-2 border-b-2 border-gray-200">
         <div className="flex flex-col items-center">
-          <span className="font-bold text-3xl text-blue-500">180</span>
+          <span className="font-bold text-3xl text-blue-500">{score}</span>
           <span className="font-bold text-sm text-blue-500">貢献度</span>
         </div>
         <div className="flex flex-col items-center">
-          <AddCircleOutlineIcon fontSize='large' className='text-blue-500 font-bold' onClick={() => TaskCreationClicked()} />
+          <AddCircleOutlineIcon fontSize='large' className='text-blue-500 font-bold' onClick={() => setOpen(true)} />
           <span className="font-bold text-sm text-blue-500">タスクを作成</span>
         </div>
       </div>
       {tasks !== undefined && tasks.map((task) => {
         return (
-          <TaskItem key={task.id} item={task as item} />
+          <TaskItem key={task.id} item={task} />
         )
       })}
       <Modal
@@ -213,7 +145,7 @@ function TaskList() {
                   />
                 </DemoContainer>
               </LocalizationProvider>
-              <Button variant="contained" onClick={() => CreateTask()}>タスクを追加</Button>
+              <Button variant="contained" onClick={() => handleSubmit()}>タスクを追加</Button>
             </div>
           </div>
         </div>

@@ -1,142 +1,77 @@
-import { useContext, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Button,
-  CircularProgress,
-  Dialog,
-  DialogTitle,
   InputLabel,
   MenuItem,
   Select,
   TextField,
   Typography,
 } from '@mui/material';
-import { ContractPromise, Abi } from '@polkadot/api-contract';
-import { WeightV2 } from '@polkadot/types/interfaces';
-import { Keyring } from '@polkadot/api';
-import ABI from './sbt/artifacts/sbt.json';
-import { ApiContext } from './context/ApiContext';
-
-const address: string =
-  process.env.CONTRACT_ADDRESS ||
-  'YXpfeRsSxi4mv4FhQ6fkqF6LdgTw8L36PcYvtZsoesBppwZ';
+import { useSbtQuery, useSbtTx } from './hooks/useContracts';
+import { useAccount } from './hooks/useAccounts';
+import { toast } from 'react-toastify';
 
 function CredentialCreation() {
-  const { api, apiReady } = useContext(ApiContext);
   const [name, setName] = useState('');
   const [department, setDepartment] = useState('');
   const [skill, setSkill] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [contract, setContract] = useState<ContractPromise>();
-  const [successMsg, setSuccessMsg] = useState('');
   const navigate = useNavigate();
-  // const contract = new Contract('ZgWBeHcntdGeyUsNc7mj51gf5trNdMr3Gc9X5tYExYSAXQA', alice, api);
-  // const sbtQuery = new SbtQuery(contract, api, alice.address);
-  // const sbtTx = new SbtTx(api, contract, alice);
-  useEffect(() => {
-    if (!api || !apiReady) {
-      console.log('api is not ready');
-      return;
-    }
-    const abi = new Abi(ABI, api.registry.getChainProperties());
-    const contract = new ContractPromise(api, abi, address);
-    setLoading(false);
-    setContract(contract);
-  }, [api, apiReady]);
+  const { account } = useAccount('//Lily');
+  const { totalSupply } = useSbtQuery(account.address);
+  const { mintToken } = useSbtTx(account);
 
   const handleSubmit = async () => {
-    setSuccessMsg('');
     if (department === '' || skill === '' || name === '') {
       return;
     }
 
-    if (!api || !apiReady) {
-      console.log('The API is not ready');
-      return;
-    }
+    const tokenId = await totalSupply();
 
-    if (!contract) {
-      console.log('no contract');
-      return;
-    }
+    const res = mintToken().then(async (res) => {
+      console.log(res)
 
-    setLoading(true);
-    //Alice, Bob, Charlie, Dave, Eve and Ferdie
-    const keyring = new Keyring({ type: 'sr25519' });
-    const alice = keyring.addFromUri('//Ferdie', { name: 'Alice default' });
-    const unsub = await contract.tx
-      .mintToken({
-        gasLimit: api.registry.createType('WeightV2', {
-          refTime: 3951114240,
-          proofSize: 629760,
-        }) as WeightV2,
-      })
-      .signAndSend(alice, (res: any) => {
-        if (res.status.isInBlock) {
-          console.log('in a block');
-        }
-        if (res.status.isFinalized) {
-          setLoading(false);
-          localStorage.setItem('name', name);
-          localStorage.setItem('department', department);
-          localStorage.setItem('skill', skill);
-          localStorage.setItem('address', alice.address);
-          localStorage.setItem('startedAt', new Date().toISOString());
-          const today = new Date();
-          const twoYearsLater = new Date(today.getFullYear() + 2, today.getMonth(), today.getDate());
-          localStorage.setItem('expiredAt', twoYearsLater.toISOString());
-          setSuccessMsg('Success!');
-          console.log('finalized');
-          res.events.forEach((record: any) => {
-            const { event } = record;
-            console.log('event', event.toHuman());
-          });
-        }
-      });
-    if (successMsg !== '') {
+      localStorage.setItem('name', name);
+      localStorage.setItem('department', department);
+      localStorage.setItem('skill', skill);
+      localStorage.setItem('address', account.address);
+      localStorage.setItem('startedAt', new Date().toISOString());
+      const today = new Date();
+      const twoYearsLater = new Date(today.getFullYear() + 2, today.getMonth(), today.getDate());
+      localStorage.setItem('expiredAt', twoYearsLater.toISOString());
+
       const sbt = {
-        id: '3',
+        id: tokenId,
         name: name,
         department: department,
         skill: skill,
-        address: alice.address,
+        address: account.address,
         startedAt: new Date().toISOString(),
         expiredAt: new Date(new Date().getFullYear() + 2, new Date().getMonth(), new Date().getDate()).toISOString(),
-      }
-      const response = await fetch('https://toyota-hackathon.azurewebsites.net/api/CreateSbt', {
+      };
+      await fetch('https://toyota-hackathon.azurewebsites.net/api/CreateSbt', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(sbt)
-      })
+      });
+
       setTimeout(() => navigate('/'), 1000);
-    }
+    }).catch((err) => {
+      console.log(err)
+    });
 
-
-  };
-
-  const handleClose = () => {
-    setLoading(false);
+    toast.promise(res, {
+      pending: '社員証を作成中...',
+      success: '社員証を作成できた！',
+      error: '社員証を作成できなかった、、、\n既に社員証をお持ちですか？',
+    });
   };
 
   return (
     <Box className="min-h-screen flex justify-center items-center">
-      <Dialog onClose={handleClose} open={loading}>
-        <DialogTitle>Please wait</DialogTitle>
-        <Box
-          sx={{
-            width: '250px',
-            height: '250px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <CircularProgress />
-        </Box>
-      </Dialog>
       <Box
         sx={{
           display: 'flex',
@@ -190,7 +125,6 @@ function CredentialCreation() {
             全ての情報を入力してください
           </Typography>
         )}
-        <Typography sx={{ color: 'green' }}>{successMsg}</Typography>
       </Box>
     </Box>
   );

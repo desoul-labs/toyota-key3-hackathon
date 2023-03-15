@@ -7,6 +7,9 @@ import ProposalList from './ProposalList';
 import Nav from './Nav';
 import ProposalCreation from './ProposalCreation';
 import ProposalItemDetail from './ProposalItemDetail';
+import { ToastContainer } from 'react-toastify';
+
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   return (
@@ -22,6 +25,18 @@ function App() {
         </Routes>
       </ApiContextProvider>
       <Nav />
+      <ToastContainer
+        position="top-center"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </>
   );
 }

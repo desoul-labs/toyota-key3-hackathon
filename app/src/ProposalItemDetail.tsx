@@ -4,6 +4,8 @@ import AccessAlarmIcon from '@mui/icons-material/AccessAlarm';
 import { useEffect, useState } from "react";
 import { ArrowBack } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
+import { useProposalQuery } from "./hooks/useContracts";
+import { useAccount } from "./hooks/useAccounts";
 
 interface Proposal {
   id: string;
@@ -21,6 +23,8 @@ function ProposalItemDetail() {
   const [proposal, setProposal] = useState<Proposal>()
   const [loading, setLoading] = useState(true);
   const { proposalId } = useParams();
+  const { account } = useAccount('//Lily');
+  const { getProposalCount, getProposal } = useProposalQuery(account.address);
   const navigate = useNavigate();
 
   useEffect(() => {
