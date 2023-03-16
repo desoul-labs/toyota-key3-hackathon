@@ -3,25 +3,14 @@ import { Box, Button, Divider, Input, List, ListItem, ListItemAvatar, ListItemTe
 import Person2Icon from '@mui/icons-material/Person2';
 import AccessAlarmIcon from '@mui/icons-material/AccessAlarm';
 import CloseIcon from '@mui/icons-material/Close';
-import { useTaskQuery } from './hooks/useContracts';
+import { useTaskQuery, useTaskTx, useSbtQuery } from './hooks/useContracts';
 import { useAccount } from "./hooks/useAccounts";
 import { Item } from "./types/task";
+import { toast } from 'react-toastify';
 
 interface Props {
   item: Item;
 }
-
-const style = {
-  position: 'absolute' as 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: 400,
-  bgcolor: 'background.paper',
-  border: '2px solid #000',
-  boxShadow: 24,
-  p: 4,
-};
 
 const TASK_CONTRACT_ADDR = 'Z9hGfS7gvyvPLjAMne9qkJjmgS9EPbktxrmVz17nc6sypXE';
 
@@ -30,7 +19,10 @@ function TaskItem({ item }: Props) {
   const { account } = useAccount('//Lily');
   const [taskCompleted, setTaskCompleted] = useState(false);
   const [owner, setOwner] = useState<string>('');
+  const [name, setName] = useState<string>('');
+  const [evaluation, setEvaluation] = useState<string>('');
   const { getOwnerOfTask, isTaskCompleted } = useTaskQuery(account.address);
+  const { takeTask, evaluateTask } = useTaskTx(account);
 
   useEffect(() => {
     const checkTaskCompleted = async () => {
@@ -46,9 +38,37 @@ function TaskItem({ item }: Props) {
     checkTaskCompleted();
   }, [getOwnerOfTask, isTaskCompleted, item.id])
 
+  useEffect(() => {
+    const fetchData = async () => {
+      const response = await fetch(`https://toyota-hackathon.azurewebsites.net/api/sbt/${owner}`);
+      const data = await response.json();
+      setName(data);
+      console.log(data)
+    }
+    fetchData()
+  }, [owner])
   const handleClose = () => setOpen(false);
   const handleOpen = () => setOpen(true);
-
+  const handleSubmit = async (id: number) => {
+    const res = takeTask(id).then(async (res) => {
+      console.log(res)
+    });
+    toast.promise(res, {
+      pending: 'タスクを担当しようとしています',
+      success: 'タスクを担当しました',
+      error: 'タスクの担当に失敗しました'
+    });
+  }
+  const handleEvaluationSubmit = async (evaluation: number) => {
+    const res = evaluateTask(item.id, evaluation).then(async (res) => {
+      console.log(res)
+    });
+    toast.promise(res, {
+      pending: 'タスクを担当しようとしています',
+      success: 'タスクを担当しました',
+      error: 'タスクの担当に失敗しました'
+    });
+  }
   return (
     <>
       <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
@@ -66,7 +86,7 @@ function TaskItem({ item }: Props) {
                       variant="body2"
                       color="text.primary"
                     >
-                      {item.user}
+                      {owner === TASK_CONTRACT_ADDR ? '' : name}
                     </Typography>
                     <AccessAlarmIcon />
                     {item.expiredAt}
@@ -79,18 +99,21 @@ function TaskItem({ item }: Props) {
                 variant="outlined"
                 // disabled={item.status === 4 || item.status === 5}
                 className="bg-blue-500 text-white font-bold py-2 px-4 rounded h-10"
-                onClick={handleOpen}
+                onClick={() => handleSubmit(item.id)}
               >
                 自分が担当
-              </Button> :
-              <Button
-                variant="outlined"
-                // disabled={item.status === 4 || item.status === 5}
-                className="bg-blue-500 text-white font-bold py-2 px-4 rounded h-10"
-                onClick={handleOpen}
-              >
-                評価
-              </Button>}
+              </Button>
+              : taskCompleted ? (
+                <Button
+                  variant="outlined"
+                  // disabled={item.status === 4 || item.status === 5}
+                  className="bg-blue-500 text-white font-bold py-2 px-4 rounded h-10"
+                  onClick={handleOpen}
+                >
+                  評価
+                </Button>
+              ) : null
+            }
           </div>
         </ListItem >
         <Divider sx={{ borderBottomWidth: 1, backgroundColor: "black" }} component="li" />
@@ -129,8 +152,9 @@ function TaskItem({ item }: Props) {
                 size="small"
                 aria-describedby="outlined-weight-helper-text"
                 sx={{ mb: 2 }}
+                onChange={(e) => setEvaluation(e.target.value)}
               />
-              <Button variant="contained">評価</Button>
+              <Button onClick={() => handleEvaluationSubmit(parseInt(evaluation))} variant="contained">評価</Button>
             </div>
           </div>
         </div>

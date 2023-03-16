@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Dayjs } from 'dayjs';
+import { useContext, useState } from "react";
+import dayjs, { Dayjs } from 'dayjs';
 import { Button, IconButton, InputAdornment, OutlinedInput, TextField, Typography } from "@mui/material";
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
@@ -10,10 +10,12 @@ import { ArrowBack } from "@mui/icons-material";
 import { useProposalQuery, useProposalTx } from "./hooks/useContracts";
 import { useAccount } from "./hooks/useAccounts";
 import { toast } from 'react-toastify';
+import { ApiContext } from "./context/ApiContext";
 
 interface Proposal {
   id: number;
   title: string;
+  user: string;
   description: string;
   options: string[];
   expiredAt: string;
@@ -28,7 +30,7 @@ function ProposalCreation() {
   const { createProposal } = useProposalTx(account);
   const { getProposalCount } = useProposalQuery(account.address);
   const navigate = useNavigate();
-
+  const { api } = useContext(ApiContext);
   const [options, setOptions] = useState<string[]>([""]);
 
   const handleAddClicked = () => {
@@ -49,13 +51,15 @@ function ProposalCreation() {
     const nextProposalId = await getProposalCount();
     const proposal: Proposal = {
       id: nextProposalId,
+      user: localStorage.getItem('name')!,
       title: title,
       description: description,
       options: options,
       expiredAt: timeValue!.unix().toString()
     }
-
-    const res = createProposal(10000000000000, 5).then(async (res) => {
+    const blockTime = await (await api.query.timestamp.now()).toString()
+    const deadline = timeValue!.unix() - dayjs().unix() + parseInt(blockTime)
+    const res = createProposal(deadline, options.length).then(async (res) => {
       console.log(res)
       const response = await fetch('https://toyota-hackathon.azurewebsites.net/api/CreateProposal', {
         method: 'POST',

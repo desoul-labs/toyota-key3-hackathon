@@ -4,8 +4,9 @@ import AccessAlarmIcon from '@mui/icons-material/AccessAlarm';
 import { useEffect, useState } from "react";
 import { ArrowBack } from "@mui/icons-material";
 import { useNavigate, useParams } from "react-router-dom";
-import { useProposalQuery } from "./hooks/useContracts";
+import { useTaskQuery, useProposalQuery, useProposalTx } from "./hooks/useContracts";
 import { useAccount } from "./hooks/useAccounts";
+import { toast } from 'react-toastify';
 
 interface Proposal {
   id: string;
@@ -17,14 +18,18 @@ interface Proposal {
 }
 
 function ProposalItemDetail() {
-  const [options, setOptions] = useState<string[]>(['option1', 'option2', 'option3', 'option4']);
-  const [totalVotes, setTotalVotes] = useState<number>(20)
-  const [votes, setVotes] = useState<number[]>([1, 2, 3, 4])
+  const [optionVotes, setOptionVotes] = useState<number[]>([0]);
+  const [totalVotedVotes, setTotalVotedVotes] = useState<number>(0)
+  const [totalVotes, setTotalVotes] = useState<number>(0)
+  const [votes, setVotes] = useState<number[]>([])
   const [proposal, setProposal] = useState<Proposal>()
   const [loading, setLoading] = useState(true);
   const { proposalId } = useParams();
+  const [score, setScore] = useState<number>(0)
   const { account } = useAccount('//Lily');
   const { getProposalCount, getProposal } = useProposalQuery(account.address);
+  const { voteProposal } = useProposalTx(account);
+  const { getScore } = useTaskQuery(account.address);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -38,42 +43,76 @@ function ProposalItemDetail() {
     setLoading(false)
   }, [proposalId])
 
+  useEffect(() => {
+    const fetchScore = async () => {
+      const score = await getScore(account.address)
+      setScore(score)
+      setTotalVotes(score)
+    }
+    fetchScore()
+  }, [account, getScore])
+
+  useEffect(() => {
+    const fetchProposal = async () => {
+      if (!proposalId) return
+      const proposalOptions = await getProposal(parseInt(proposalId))
+      if (proposalOptions) {
+        setOptionVotes(proposalOptions)
+        setVotes(Array.from({ length: proposalOptions.length }, () => 0))
+        setTotalVotedVotes(proposalOptions.reduce((a, b) => a + b, 0))
+      }
+    }
+    fetchProposal()
+  }, [getProposal, proposalId])
+
   const IncreaseNumber = (index: number) => {
+    if (totalVotes <= 0) {
+      toast.error('You have no more votes')
+      return
+    }
     setTotalVotes(totalVotes - 1)
     setVotes(prevVotes => {
       const newVotes = [...prevVotes];
       newVotes[index] += 1;
       return newVotes;
     })
-    console.log(votes[1] / totalVotedVotes * 100)
-    console.log(100 - (votes[1] / totalVotedVotes * 100))
   }
+
   const cancelClicked = () => {
-    setTotalVotes(20)
-    setVotes([1, 2, 3, 4])
+    setTotalVotes(score)
+    setVotes(Array.from({ length: optionVotes.length }, () => 0))
   }
+
   const BackButtonClicked = () => {
     navigate(`/proposal`);
   }
+
   const handleClose = () => setLoading(false)
 
-  // < Dialog onClose = { handleClose } open = { loading } >
-  //     <DialogTitle>Please wait</DialogTitle>
-  //     <Box
-  //       sx={{
-  //         width: '250px',
-  //         height: '250px',
-  //         display: 'flex',
-  //         alignItems: 'center',
-  //         justifyContent: 'center',
-  //       }}
-  //     >
-  //       <CircularProgress />
-  //     </Box>
-  //   </ >
-  const totalVotedVotes = votes.reduce((a, b) => a + b, 0)
+  const handleSubmit = async () => {
+    // setLoading(true)
+    const res = await voteProposal(parseInt(proposalId!), votes).then(async (res) => {
+      console.log(res)
+    })
+    // setLoading(false)
+  }
+
   return (
     <div className="flex items-center justify-center h-full">
+      <Dialog onClose={handleClose} open={loading} >
+        <DialogTitle>Please wait</DialogTitle>
+        <Box
+          sx={{
+            width: '250px',
+            height: '250px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <CircularProgress />
+        </Box>
+      </Dialog>
       <div className="relative w-full sm:w-1/2 bg-white rounded-md p-8">
         <IconButton onClick={() => BackButtonClicked()}>
           <ArrowBack />
@@ -89,38 +128,32 @@ function ProposalItemDetail() {
           <Typography sx={{ marginTop: 2 }}>{proposal?.description}</Typography>
         </div>
         {proposal?.expiredAt && parseInt(proposal.expiredAt) * 1000 < Date.now() ?
-          options.map((option, index) => (
+          optionVotes.map((option, index) => (
             <div className="flex items-center" key={index}>
               <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center mr-2">
                 <span className="text-white font-medium">{votes[index]}</span>
               </div>
               {votes[index] === Math.max(...votes) ?
                 <Button sx={{
-                  marginTop: 1, marginButton: 1, width: "80%", backgroundImage: `linear-gradient(to right, #b9ccff ${votes[index] / totalVotedVotes * 100}%, white ${votes[index] / totalVotedVotes * 100}%, white 100%)`
+                  marginTop: 1, marginButton: 1, width: "80%", backgroundImage: `linear-gradient(to right, #b9ccff ${optionVotes[index] / totalVotedVotes * 100}%, white ${votes[index] / totalVotedVotes * 100}%, white 100%)`
                 }} variant="outlined">{index + 1}. {option}</Button>
                 :
                 <Button sx={{
-                  marginTop: 1, marginButton: 1, width: "80%", backgroundImage: `linear-gradient(to right, #c3c3c3 ${votes[index] / totalVotedVotes * 100}%, white ${votes[index] / totalVotedVotes * 100}%, white 100%)`
+                  marginTop: 1, marginButton: 1, width: "80%", backgroundImage: `linear-gradient(to right, #c3c3c3 ${optionVotes[index] / totalVotedVotes * 100}%, white ${votes[index] / totalVotedVotes * 100}%, white 100%)`
                 }} variant="outlined">{index + 1}. {option}</Button>
               }
             </div>
           ))
           :
           <>
-            {options.map((option, index) => (
+            {optionVotes.map((option, index) => (
               <div className="flex items-center" key={index}>
                 <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center mr-2">
                   <span className="text-white font-medium">{votes[index]}</span>
                 </div>
-                {votes[index] === Math.max(...votes) ?
-                  <Button sx={{
-                    marginTop: 1, marginButton: 1, width: "80%"
-                  }} onClick={() => IncreaseNumber(index)} variant="outlined">{index + 1}. {option}</Button>
-                  :
-                  <Button sx={{
-                    marginTop: 1, marginButton: 1, width: "80%"
-                  }} onClick={() => IncreaseNumber(index)} variant="outlined">{index + 1}. {option}</Button>
-                }
+                <Button sx={{
+                  marginTop: 1, marginButton: 1, width: "80%"
+                }} onClick={() => IncreaseNumber(index)} variant="outlined">{index + 1}. {option}</Button>
               </div>
             ))}
             <div className="flex items-center justify-center mt-2 flex-wrap">
@@ -134,7 +167,7 @@ function ProposalItemDetail() {
                 </Button>
               </div>
               <div className="flex flex-col w-full justify-center mt-3">
-                <Button variant="contained" className="w-full mx-2">
+                <Button onClick={() => handleSubmit()} variant="contained" className="w-full mx-2">
                   決定
                 </Button>
               </div>

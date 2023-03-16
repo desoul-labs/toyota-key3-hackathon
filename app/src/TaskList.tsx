@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import TaskItem from "./TaskItem";
-import { Dayjs } from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { Button, IconButton, Modal, OutlinedInput, TextField, Typography } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
@@ -11,6 +11,7 @@ import { useTaskQuery, useTaskTx } from './hooks/useContracts';
 import { useAccount } from "./hooks/useAccounts";
 import { Item } from "./types/task";
 import { toast } from 'react-toastify';
+import { ApiContext } from "./context/ApiContext";
 
 function TaskList() {
   const [tasks, setTasks] = useState<Item[]>()
@@ -20,6 +21,7 @@ function TaskList() {
   const [description, setDescription] = useState<string>('')
   const [user, setUser] = useState<string>('')
   const [timeValue, setTimeValue] = useState<Dayjs | undefined>()
+  const { api } = useContext(ApiContext);
 
   const { account } = useAccount('//Lily');
   const { getTaskCount, getOwnerOfTask, getScore, getTaskDeadline } = useTaskQuery(account.address);
@@ -58,7 +60,10 @@ function TaskList() {
       status: 0
     }
 
-    const res = createTask(10000000000000).then(async (res) => {
+    const blockTime = await (await api.query.timestamp.now()).toString()
+    const deadline = timeValue!.unix() - dayjs().unix() + parseInt(blockTime)
+
+    const res = createTask(deadline).then(async (res) => {
       console.log(res)
 
       const response = await fetch('https://toyota-hackathon.azurewebsites.net/api/CreateTask', {
