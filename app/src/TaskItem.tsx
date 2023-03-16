@@ -140,7 +140,9 @@ function TaskItem({ item }: Props) {
             <div className="flex items-center mb-4">
               <Person2Icon fontSize="large" className="text-gray-500 mr-2" />
               <span className="text-lg font-bold">{item.user}</span>
-              <span className="ml-4 text-gray-500">Due Date: 2023-03-01</span>
+              <span className="ml-4 text-gray-500">
+                {new Date(parseInt(item.expiredAt) * 1000).toLocaleString().slice(0, 10)}
+              </span>
             </div>
             <p className="text-lg text-gray-800">
               {item.description}
