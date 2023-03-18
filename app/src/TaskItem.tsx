@@ -18,6 +18,7 @@ function TaskItem({ item }: Props) {
   const [open, setOpen] = useState(false);
   const account = useAccount();
   const [taskCompleted, setTaskCompleted] = useState(false);
+  const [errMessage, setErrMessage] = useState<string>('');
   const [owner, setOwner] = useState<string>('');
   const [name, setName] = useState<string>('');
   const [evaluation, setEvaluation] = useState<string>('');
@@ -48,11 +49,12 @@ function TaskItem({ item }: Props) {
   const handleEvaluationSubmit = async () => {
     if (!isNaN(parseInt(evaluation))) {
       if (parseInt(evaluation) < 0 || parseInt(evaluation) > 100) {
-        toast.error('評価は0~100の間で入力してください');
+        setErrMessage('評価は0~100の間で入力してください');
       }
       else {
         const res = evaluateTask(parseInt(item.id), parseInt(evaluation)).then(async (res) => {
           console.log(res)
+          
         });
         toast.promise(res, {
           pending: '評価をしています',
@@ -62,7 +64,7 @@ function TaskItem({ item }: Props) {
       }
     }
     else {
-      toast.error('評価は数値で入力してください');
+      setErrMessage('評価は数値で入力してください');
     }
   }
 
@@ -169,46 +171,7 @@ function TaskItem({ item }: Props) {
                 onChange={(e) => setEvaluation(e.target.value)}
               />
               <Button onClick={() => handleEvaluationSubmit()} variant="contained">評価</Button>
-            </div>
-          </div>
-        </div>
-      </Modal>
-
-      <Modal
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <div className="flex items-center justify-center h-full">
-          <div className="relative w-full sm:w-1/2 bg-white rounded-md shadow-lg p-8">
-            <div style={{ position: 'absolute', top: '10px', right: '10px' }}>
-              <IconButton
-                aria-label="close"
-                onClick={handleClose}
-                className="absolute top-1 right-1"
-              >
-                <CloseIcon />
-              </IconButton>
-            </div>
-            <h2 className="text-2xl font-bold mb-4 text-center">{item.title}</h2>
-            <div className="flex items-center mb-4">
-              <Person2Icon fontSize="large" className="text-gray-500 mr-2" />
-              <span className="text-lg font-bold">{item.user}</span>
-              <span className="ml-4 text-gray-500">Due Date: 2023-03-01</span>
-            </div>
-            <p className="text-lg text-gray-800">
-              {item.description}
-            </p>
-            <div className="flex flex-col mt-10">
-              <Typography>評価点(0-100)</Typography>
-              <OutlinedInput
-                id="outlined-adornment-weight"
-                size="small"
-                aria-describedby="outlined-weight-helper-text"
-                sx={{ mb: 2 }}
-              />
-              <Button variant="contained">評価</Button>
+              <Typography sx={{ color: "red" }}>{errMessage}</Typography>
             </div>
           </div>
         </div>

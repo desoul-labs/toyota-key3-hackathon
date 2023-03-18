@@ -10,19 +10,22 @@ import ProposalItemDetail from './ProposalItemDetail';
 import { ToastContainer } from 'react-toastify';
 
 import 'react-toastify/dist/ReactToastify.css';
+import { Box } from '@mui/material';
 
 function App() {
   return (
     <>
       <ApiContextProvider>
-        <Routes>
-          <Route path="/" element={<CredentialDetail />} />
-          <Route path="/credential/creation" element={<CredentialCreation />} />
-          <Route path="/task" element={<TaskList />} />
-          <Route path="/proposal" element={<ProposalList />} />
-          <Route path="/proposal/creation" element={<ProposalCreation />} />
-          <Route path="/proposal/:proposalId" element={<ProposalItemDetail />} />
-        </Routes>
+        <Box sx={{ marginBottom: '80px' }}>
+          <Routes>
+            <Route path="/" element={<CredentialDetail />} />
+            <Route path="/credential/creation" element={<CredentialCreation />} />
+            <Route path="/task" element={<TaskList />} />
+            <Route path="/proposal" element={<ProposalList />} />
+            <Route path="/proposal/creation" element={<ProposalCreation />} />
+            <Route path="/proposal/:proposalId" element={<ProposalItemDetail />} />
+          </Routes>
+        </Box>
       </ApiContextProvider>
       <Nav />
       <ToastContainer

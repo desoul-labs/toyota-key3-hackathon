@@ -299,7 +299,7 @@ export function useTaskTx(signer: KeyringPair) {
   const evaluateTask = useCallback(async (id: number, score: number) => {
     return new Promise<SignAndSendSuccessResponse>(async (resolve, reject) => {
       await txStub
-        .evaluateTask(IdBuilder.U32(id), score, createWeightV2(api, 6168911293, 867985))
+        .evaluateTask(IdBuilder.U32(id), score, createWeightV2(api, 8179689813, 1036063))
         .then(
           (val) => {
             if (val.error !== undefined) {

@@ -50,7 +50,6 @@ function TaskList() {
 
   const handleSubmit = async () => {
     const nextTaskId = await getTaskCount();
-    console.log(nextTaskId);
 
     const task: Item = {
       id: nextTaskId.toString(),
@@ -61,12 +60,9 @@ function TaskList() {
       status: 0
     }
 
-    console.log(task);
     const blockTime = await (await api.query.timestamp.now()).toString()
     const deadline = timeValue!.unix() - dayjs().unix() + parseInt(blockTime)
     const res = createTask(deadline).then(async (res) => {
-      console.log(res)
-
       const response = await fetch('https://toyota-hackathon.azurewebsites.net/api/CreateTask', {
         method: 'POST',
         headers: {
