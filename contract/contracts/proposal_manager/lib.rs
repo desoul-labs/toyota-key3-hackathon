@@ -80,14 +80,41 @@ pub mod proposal_manager {
             for _ in 0..option_count {
                 options.push(0);
             }
+            self.deadline.insert(&Id::U32(self.next_id), &deadline);
             self.proposal.insert(&Id::U32(self.next_id), &options);
             self.next_id += 1;
             Ok(())
         }
 
         #[ink(message)]
+        pub fn is_voted(&self, id: Id, account: AccountId) -> bool {
+            self.voted.get(&id).unwrap_or_default().contains(&account)
+        }
+
+        #[ink(message)]
         pub fn get_proposal(&self, id: Id) -> Vec<u32> {
             self.proposal.get(&id).unwrap()
+        }
+
+        #[ink(message)]
+        pub fn get_vote_credit(&self, account: AccountId) -> u32 {
+            let total_owner = SBTRef::total_supply(&self.sbt);
+            let voter_score = TaskManagerRef::get_score(&self.sbt, account);
+            let total_score = if TaskManagerRef::get_total_score(&self.sbt) == 0 {
+                total_owner as u32
+            } else {
+                TaskManagerRef::get_total_score(&self.sbt)
+            };
+
+            let mut temp = (total_owner + 1) / 2;
+            let mut factor = total_owner;
+            while temp < factor {
+                factor = temp;
+                temp = (total_owner / temp + temp) / 2;
+            }
+
+            let normalized_voter_score = if voter_score == 0 { 1 } else { voter_score };
+            factor as u32 * normalized_voter_score * 100 / total_score
         }
 
         #[ink(message)]
