@@ -90,7 +90,7 @@ function TaskItem({ item }: Props) {
                       {owner === TASK_CONTRACT_ADDR ? '' : name}
                     </Typography>
                     <AccessAlarmIcon />
-                    {item.expiredAt}
+                    {new Date(parseInt(item?.expiredAt || "0") * 1000).toLocaleString().slice(0, 10)}
                   </React.Fragment>
                 }
               />
