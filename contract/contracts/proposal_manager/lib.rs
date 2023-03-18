@@ -32,6 +32,7 @@ pub mod proposal_manager {
         metadata: Data,
         next_id: u32,
         proposal: Mapping<Id, Vec<u32>>,
+        voted: Mapping<Id, Vec<AccountId>>,
         deadline: Mapping<Id, u64>,
         task_manager: AccountId,
         sbt: AccountId,
@@ -50,6 +51,7 @@ pub mod proposal_manager {
                 next_id: 0,
                 proposal: Mapping::new(),
                 deadline: Mapping::new(),
+                voted: Mapping::new(),
                 task_manager,
                 sbt,
             };
@@ -99,6 +101,9 @@ pub mod proposal_manager {
             if self.deadline.get(&id).unwrap_or(0) < Self::env().block_timestamp() {
                 return Err(PSP34Error::Custom("Proposal is closed".into()))
             }
+            if self.voted.get(&id).unwrap_or_default().contains(&Self::env().caller()) {
+                return Err(PSP34Error::Custom("Already voted".into()))
+            }
             let mut proposal = self.proposal.get(&id).unwrap();
             if proposal.len() != votes.len() {
                 return Err(PSP34Error::Custom("Invalid vote".into()))
@@ -129,6 +134,8 @@ pub mod proposal_manager {
             for (i, vote) in votes.iter().enumerate() {
                 proposal[i] += vote;
             }
+            self.voted.get(&id).unwrap_or_default().push(Self::env().caller());
+
             Ok(())
         }
     }
