@@ -38,15 +38,15 @@ function TaskItem({ item }: Props) {
     checkTaskCompleted();
   }, [getOwnerOfTask, isTaskCompleted, item.id])
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const response = await fetch(`https://toyota-hackathon.azurewebsites.net/api/sbt/${owner}`);
-      const data = await response.json();
-      setName(data);
-      console.log(data)
-    }
-    fetchData()
-  }, [owner])
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     const response = await fetch(`https://toyota-hackathon.azurewebsites.net/api/sbt/${owner}`);
+  //     const data = await response.json();
+  //     setName(data);
+  //     console.log(data)
+  //   }
+  //   fetchData()
+  // }, [owner])
   const handleClose = () => setOpen(false);
   const handleOpen = () => setOpen(true);
 
@@ -81,6 +81,7 @@ function TaskItem({ item }: Props) {
                 secondary={
                   <React.Fragment>
                     <Person2Icon />
+                    {item.user}
                     <Typography
                       sx={{ display: 'inline', marginRight: '10px' }}
                       component="span"
