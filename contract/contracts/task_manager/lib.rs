@@ -71,24 +71,10 @@ pub mod task_manager {
             if deadline < Self::env().block_timestamp() {
                 return Err(PSP34Error::Custom("Deadline is in the past".into()))
             }
-            self._mint_to(Self::env().account_id(), Id::U32(self.next_id))?;
+            self._mint_to(Self::env().caller(), Id::U32(self.next_id))?;
             self.deadlines.insert(&Id::U32(self.next_id), &deadline);
             self.next_id += 1;
             Ok(())
-        }
-
-        #[ink(message)]
-        pub fn take_task(&mut self, id: Id) -> Result<(), PSP34Error> {
-            if SBTRef::balance_of(&self.sbt, Self::env().caller()) == 0 {
-                return Err(PSP34Error::Custom("Not a member".into()))
-            }
-            if self.owner_of(id.clone()).unwrap() != Self::env().account_id() {
-                return Err(PSP34Error::Custom("Task is already taken".into()))
-            }
-            if self.completed.get(&id).is_some() {
-                return Err(PSP34Error::Custom("Task is completed".into()))
-            }
-            return self.transfer(Self::env().caller(), id, Vec::new())
         }
 
         #[ink(message)]
