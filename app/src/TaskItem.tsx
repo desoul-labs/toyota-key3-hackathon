@@ -55,9 +55,9 @@ function TaskItem({ item }: Props) {
           console.log(res)
         });
         toast.promise(res, {
-          pending: 'タスクを担当しようとしています',
-          success: 'タスクを担当しました',
-          error: 'タスクの担当に失敗しました'
+          pending: '評価をしています',
+          success: '評価しました',
+          error: '評価に失敗しました'
         });
       }
     }
@@ -71,10 +71,11 @@ function TaskItem({ item }: Props) {
       console.log(res)
     });
     toast.promise(res, {
-      pending: 'タスクを担当しようとしています',
-      success: 'タスクを担当しました',
-      error: 'タスクの担当に失敗しました'
+      pending: 'タスクを完成しようとしています',
+      success: 'タスクを完成しました',
+      error: 'タスクの完成に失敗しました'
     });
+    setTaskCompleted(true)
   }
 
   return (
