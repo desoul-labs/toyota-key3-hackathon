@@ -21,7 +21,7 @@ function TaskList() {
   const [description, setDescription] = useState<string>('')
   const [user, setUser] = useState<string>('')
   const [timeValue, setTimeValue] = useState<Dayjs | undefined>()
-  const { api } = useContext(ApiContext);
+  const { api } = useContext(ApiContext)
 
   const { account } = useAccount('//Lily');
   const { getTaskCount, getOwnerOfTask, getScore, getTaskDeadline } = useTaskQuery(account.address);
@@ -57,6 +57,7 @@ function TaskList() {
       title: title,
       description: description,
       expiredAt: timeValue!.unix().toString(),
+      user: localStorage.getItem('name')!,
       status: 0
     }
 
@@ -67,7 +68,7 @@ function TaskList() {
       console.log(res)
 
       const response = await fetch('https://toyota-hackathon.azurewebsites.net/api/CreateTask', {
-        method: 'POST',
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },

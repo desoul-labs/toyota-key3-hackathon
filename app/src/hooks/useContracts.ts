@@ -17,9 +17,9 @@ import { AccountId, Id } from "../sbt/typedContract/types-returns/sbt";
 import { IdBuilder } from "../sbt/typedContract/types-arguments/sbt";
 import { SignAndSendSuccessResponse } from "@727-ventures/typechain-types";
 
-const SBT_CONTRACT_ADDR = 'YXpfeRsSxi4mv4FhQ6fkqF6LdgTw8L36PcYvtZsoesBppwZ';
-const TASK_CONTRACT_ADDR = 'Z9hGfS7gvyvPLjAMne9qkJjmgS9EPbktxrmVz17nc6sypXE';
-const PROPOSAL_CONTRACT_ADDR = 'X79VMwE553iYesPWwuHN8FpJUKHqfnJu8sTK5MkMv6J3Sni';
+const SBT_CONTRACT_ADDR = 'XXz1B67qhcj2oL6QrwyANk5Y3zJWxqyw1H2D2H2XvHM498h';
+const TASK_CONTRACT_ADDR = 'Ymi3RJKiQoJUFqpiDoKkoJAtgEcZMmu9QqempavBza57TPw';
+const PROPOSAL_CONTRACT_ADDR = 'aFBJjEyUDXrxqRxwCNxvskG3e1ELkTsR4Nn3hNVQyaHL9Sb';
 
 const createWeightV2 = (api: ApiPromise, refTime: number, proofSize: number) => {
   return {

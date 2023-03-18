@@ -12,7 +12,7 @@ interface Props {
   item: Item;
 }
 
-const TASK_CONTRACT_ADDR = 'Z9hGfS7gvyvPLjAMne9qkJjmgS9EPbktxrmVz17nc6sypXE';
+const TASK_CONTRACT_ADDR = 'Ymi3RJKiQoJUFqpiDoKkoJAtgEcZMmu9QqempavBza57TPw';
 
 function TaskItem({ item }: Props) {
   const [open, setOpen] = useState(false);
@@ -49,25 +49,26 @@ function TaskItem({ item }: Props) {
   }, [owner])
   const handleClose = () => setOpen(false);
   const handleOpen = () => setOpen(true);
-  const handleSubmit = async (id: number) => {
-    const res = takeTask(id).then(async (res) => {
-      console.log(res)
-    });
-    toast.promise(res, {
-      pending: 'タスクを担当しようとしています',
-      success: 'タスクを担当しました',
-      error: 'タスクの担当に失敗しました'
-    });
-  }
-  const handleEvaluationSubmit = async (evaluation: number) => {
-    const res = evaluateTask(item.id, evaluation).then(async (res) => {
-      console.log(res)
-    });
-    toast.promise(res, {
-      pending: 'タスクを担当しようとしています',
-      success: 'タスクを担当しました',
-      error: 'タスクの担当に失敗しました'
-    });
+
+  const handleEvaluationSubmit = async () => {
+    if (!isNaN(parseInt(evaluation))) {
+      if (parseInt(evaluation) < 0 || parseInt(evaluation) > 100) {
+        toast.error('評価は0~100の間で入力してください');
+      }
+      else {
+        const res = evaluateTask(item.id, parseInt(evaluation)).then(async (res) => {
+          console.log(res)
+        });
+        toast.promise(res, {
+          pending: 'タスクを担当しようとしています',
+          success: 'タスクを担当しました',
+          error: 'タスクの担当に失敗しました'
+        });
+      }
+    }
+    else {
+      toast.error('評価は数値で入力してください');
+    }
   }
   return (
     <>
@@ -94,25 +95,16 @@ function TaskItem({ item }: Props) {
                 }
               />
             </div>
-            {owner === TASK_CONTRACT_ADDR ?
+            {taskCompleted ? (
               <Button
                 variant="outlined"
                 // disabled={item.status === 4 || item.status === 5}
                 className="bg-blue-500 text-white font-bold py-2 px-4 rounded h-10"
-                onClick={() => handleSubmit(item.id)}
+                onClick={handleOpen}
               >
-                自分が担当
+                評価
               </Button>
-              : taskCompleted ? (
-                <Button
-                  variant="outlined"
-                  // disabled={item.status === 4 || item.status === 5}
-                  className="bg-blue-500 text-white font-bold py-2 px-4 rounded h-10"
-                  onClick={handleOpen}
-                >
-                  評価
-                </Button>
-              ) : null
+            ) : null
             }
           </div>
         </ListItem >
@@ -156,7 +148,7 @@ function TaskItem({ item }: Props) {
                 sx={{ mb: 2 }}
                 onChange={(e) => setEvaluation(e.target.value)}
               />
-              <Button onClick={() => handleEvaluationSubmit(parseInt(evaluation))} variant="contained">評価</Button>
+              <Button onClick={() => handleEvaluationSubmit()} variant="contained">評価</Button>
             </div>
           </div>
         </div>
@@ -203,7 +195,7 @@ function TaskItem({ item }: Props) {
         </div>
       </Modal>
     </>
-  );
+  )
 }
 
 export default TaskItem;
