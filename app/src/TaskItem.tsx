@@ -7,7 +7,7 @@ import { useTaskQuery, useTaskTx, useSbtQuery } from './hooks/useContracts';
 import { useAccount } from "./hooks/useAccounts";
 import { Item } from "./types/task";
 import { toast } from 'react-toastify';
-
+import { Keyring } from '@polkadot/api'
 interface Props {
   item: Item;
 }
@@ -22,31 +22,26 @@ function TaskItem({ item }: Props) {
   const [name, setName] = useState<string>('');
   const [evaluation, setEvaluation] = useState<string>('');
   const { getOwnerOfTask, isTaskCompleted } = useTaskQuery(account.address);
-  const { takeTask, evaluateTask } = useTaskTx(account);
+  const { completeTask, evaluateTask } = useTaskTx(account);
+  const keyring = new Keyring({ type: 'sr25519' });
 
   useEffect(() => {
     const checkTaskCompleted = async () => {
-      const result = await isTaskCompleted(item.id);
+      const result = await isTaskCompleted(parseInt(item.id));
       setTaskCompleted(result as boolean)
-      const owner = await getOwnerOfTask(item.id);
-
+      const owner = await getOwnerOfTask(parseInt(item.id));
+      console.log('item id:' + item.id)
+      console.log('title:' + item.title)
       if (owner) {
-        console.log('owner', owner.toString());
-        setOwner(owner.toString());
+        setOwner(keyring.encodeAddress(owner as string).toString());
+        console.log('owner', keyring.encodeAddress(owner as string).toString())
+        console.log('account', account.address)
+        console.log('istaskcomplete', taskCompleted)
       }
     }
     checkTaskCompleted();
-  }, [getOwnerOfTask, isTaskCompleted, item.id])
+  }, [getOwnerOfTask, isTaskCompleted, item.id, keyring])
 
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     const response = await fetch(`https://toyota-hackathon.azurewebsites.net/api/sbt/${owner}`);
-  //     const data = await response.json();
-  //     setName(data);
-  //     console.log(data)
-  //   }
-  //   fetchData()
-  // }, [owner])
   const handleClose = () => setOpen(false);
   const handleOpen = () => setOpen(true);
 
@@ -56,7 +51,7 @@ function TaskItem({ item }: Props) {
         toast.error('評価は0~100の間で入力してください');
       }
       else {
-        const res = evaluateTask(item.id, parseInt(evaluation)).then(async (res) => {
+        const res = evaluateTask(parseInt(item.id), parseInt(evaluation)).then(async (res) => {
           console.log(res)
         });
         toast.promise(res, {
@@ -70,6 +65,18 @@ function TaskItem({ item }: Props) {
       toast.error('評価は数値で入力してください');
     }
   }
+
+  const handleTaskCompleted = async () => {
+    const res = completeTask(parseInt(item.id)).then(async (res) => {
+      console.log(res)
+    });
+    toast.promise(res, {
+      pending: 'タスクを担当しようとしています',
+      success: 'タスクを担当しました',
+      error: 'タスクの担当に失敗しました'
+    });
+  }
+
   return (
     <>
       <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
@@ -96,16 +103,27 @@ function TaskItem({ item }: Props) {
                 }
               />
             </div>
-            {taskCompleted ? (
-              <Button
-                variant="outlined"
-                // disabled={item.status === 4 || item.status === 5}
-                className="bg-blue-500 text-white font-bold py-2 px-4 rounded h-10"
-                onClick={handleOpen}
-              >
-                評価
-              </Button>
-            ) : null
+            {taskCompleted ?
+              owner !== account.address ? (
+                <Button
+                  variant="outlined"
+                  // disabled={item.status === 4 || item.status === 5}
+                  className="bg-blue-500 text-white font-bold py-2 px-4 rounded h-10"
+                  onClick={handleOpen}
+                >
+                  評価
+                </Button>
+              ) : null
+              : owner === account.address ? (
+                <Button
+                  variant="outlined"
+                  // disabled={item.status === 4 || item.status === 5}
+                  className="bg-blue-500 text-white font-bold py-2 px-4 rounded h-10"
+                  onClick={handleTaskCompleted}
+                >
+                  完了
+                </Button>
+              ) : null
             }
           </div>
         </ListItem >
@@ -161,7 +179,6 @@ function TaskItem({ item }: Props) {
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"
       >
-        {/* <div className="fixed w-1/2 min-w-full h-2/3 top-1/4 left-1/4 bg-white rounded-md shadow-lg p-8"> */}
         <div className="flex items-center justify-center h-full">
           <div className="relative w-full sm:w-1/2 bg-white rounded-md shadow-lg p-8">
             <div style={{ position: 'absolute', top: '10px', right: '10px' }}>

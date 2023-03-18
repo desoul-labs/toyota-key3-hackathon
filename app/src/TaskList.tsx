@@ -53,7 +53,7 @@ function TaskList() {
     console.log(nextTaskId);
 
     const task: Item = {
-      id: nextTaskId,
+      id: nextTaskId.toString(),
       title: title,
       description: description,
       expiredAt: timeValue!.unix().toString(),
@@ -64,7 +64,6 @@ function TaskList() {
     console.log(task);
     const blockTime = await (await api.query.timestamp.now()).toString()
     const deadline = timeValue!.unix() - dayjs().unix() + parseInt(blockTime)
-
     const res = createTask(deadline).then(async (res) => {
       console.log(res)
 
