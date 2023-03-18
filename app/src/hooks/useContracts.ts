@@ -392,7 +392,7 @@ export function useProposalTx(signer: KeyringPair) {
   const createProposal = useCallback(async (deadline: number, optionCount: number) => {
     return new Promise<SignAndSendSuccessResponse>(async (resolve, reject) => {
       await txStub
-        .createProposal(deadline, optionCount, createWeightV2(api, 6289762248, 904461))
+        .createProposal(deadline, optionCount, createWeightV2(api, 6359090864, 915511))
         .then(
           (val) => {
             if (val.error !== undefined) {
