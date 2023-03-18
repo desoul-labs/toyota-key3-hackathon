@@ -19,7 +19,7 @@ import { SignAndSendSuccessResponse } from "@727-ventures/typechain-types";
 
 const SBT_CONTRACT_ADDR = 'XXz1B67qhcj2oL6QrwyANk5Y3zJWxqyw1H2D2H2XvHM498h';
 const TASK_CONTRACT_ADDR = 'Ymi3RJKiQoJUFqpiDoKkoJAtgEcZMmu9QqempavBza57TPw';
-const PROPOSAL_CONTRACT_ADDR = 'aFBJjEyUDXrxqRxwCNxvskG3e1ELkTsR4Nn3hNVQyaHL9Sb';
+const PROPOSAL_CONTRACT_ADDR = 'Z3DjWPHb83nUVgGNrsLEf3PXiBma4bx3EVfZQN5ZXN4GKQ4';
 
 const createWeightV2 = (api: ApiPromise, refTime: number, proofSize: number) => {
   return {
