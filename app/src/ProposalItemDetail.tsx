@@ -37,7 +37,11 @@ function ProposalItemDetail() {
     const fetchData = async () => {
       const response = await fetch(`https://toyota-hackathon.azurewebsites.net/api/proposal/${proposalId}`);
       const data = await response.json();
+      console.log(data)
       setProposal(data);
+      console.log(parseInt(proposal!.expiredAt) * 1000)
+      console.log(Date.now())
+      console.log(parseInt(proposal!.expiredAt) * 1000 < Date.now())
     }
     fetchData()
     setLoading(false)
@@ -138,8 +142,8 @@ function ProposalItemDetail() {
           </div>
           <Typography sx={{ marginTop: 2 }}>{proposal?.description}</Typography>
         </div>
-        {proposal?.expiredAt && parseInt(proposal.expiredAt) * 1000 < Date.now() ?
-          optionVotes.map((option, index) => (
+        {proposal !== undefined && proposal !== null && parseInt(proposal!.expiredAt) * 1000 < Date.now() &&
+          proposal!.options.map((option, index) => (
             <div className="flex items-center" key={index}>
               <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center mr-2">
                 <span className="text-white font-medium">{votes[index]}</span>
@@ -154,38 +158,38 @@ function ProposalItemDetail() {
                 }} variant="outlined">{index + 1}. {option}</Button>
               }
             </div>
-          ))
-          :
-          isUserVoted ?
-            <>
-              {optionVotes.map((option, index) => (
-                <div className="flex items-center" key={index}>
-                  <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center mr-2">
-                    <span className="text-white font-medium">{votes[index]}</span>
-                  </div>
-                  <Button sx={{
-                    marginTop: 1, marginButton: 1, width: "80%"
-                  }} onClick={() => IncreaseNumber(index)} variant="outlined">{index + 1}. {option}</Button>
-                </div>
-              ))}
-              <div className="flex items-center justify-center mt-2 flex-wrap">
-                <div className="mr-2 text-center">残りの票数: </div>
+          ))}
+
+        {proposal !== undefined && proposal !== null && parseInt(proposal!.expiredAt) * 1000 > Date.now() && !isUserVoted ?
+          <>
+            {proposal.options.map((option, index) => (
+              <div className="flex items-center" key={index}>
                 <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center mr-2">
-                  <span className="text-white font-medium">{totalVotes}</span>
+                  <span className="text-white font-medium">{votes[index]}</span>
                 </div>
-                <div className="flex flex-col w-full justify-center mt-3">
-                  <Button variant="contained" color="error" onClick={() => cancelClicked()} className="w-full mx-2">
-                    クリア
-                  </Button>
-                </div>
-                <div className="flex flex-col w-full justify-center mt-3">
-                  <Button onClick={() => handleSubmit()} variant="contained" className="w-full mx-2">
-                    決定
-                  </Button>
-                </div>
+                <Button sx={{
+                  marginTop: 1, marginButton: 1, width: "80%"
+                }} onClick={() => IncreaseNumber(index)} variant="outlined">{index + 1}. {option}</Button>
               </div>
-            </>
-            : null
+            ))}
+            <div className="flex items-center justify-center mt-2 flex-wrap">
+              <div className="mr-2 text-center">残りの票数: </div>
+              <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center mr-2">
+                <span className="text-white font-medium">{totalVotes}</span>
+              </div>
+              <div className="flex flex-col w-full justify-center mt-3">
+                <Button variant="contained" color="error" onClick={() => cancelClicked()} className="w-full mx-2">
+                  クリア
+                </Button>
+              </div>
+              <div className="flex flex-col w-full justify-center mt-3">
+                <Button onClick={() => handleSubmit()} variant="contained" className="w-full mx-2">
+                  決定
+                </Button>
+              </div>
+            </div>
+          </>
+          : null
         }
       </div >
     </div >
