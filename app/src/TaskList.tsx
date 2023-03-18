@@ -23,7 +23,7 @@ function TaskList() {
   const [timeValue, setTimeValue] = useState<Dayjs | undefined>()
   const { api } = useContext(ApiContext)
 
-  const { account } = useAccount();
+  const account = useAccount();
   const { getTaskCount, getOwnerOfTask, getScore, getTaskDeadline } = useTaskQuery(account.address);
   const { createTask } = useTaskTx(account);
 
