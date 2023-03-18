@@ -26,7 +26,7 @@ function ProposalCreation() {
   const [description, setDescription] = useState<string>("")
   const [timeValue, setTimeValue] = useState<Dayjs | undefined>()
   const [proposals, setProposals] = useState<Proposal[]>()
-  const { account } = useAccount('//Lily');
+  const { account } = useAccount();
   const { createProposal } = useProposalTx(account);
   const { getProposalCount } = useProposalQuery(account.address);
   const navigate = useNavigate();

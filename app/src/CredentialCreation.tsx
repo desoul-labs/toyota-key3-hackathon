@@ -18,7 +18,8 @@ function CredentialCreation() {
   const [department, setDepartment] = useState('');
   const [skill, setSkill] = useState('');
   const navigate = useNavigate();
-  const { account } = useAccount('//Lily');
+  const { account } = useAccount();
+  // const mnemonicAlice = mnemonicGenerate();
   const { totalSupply } = useSbtQuery(account.address);
   const { mintToken } = useSbtTx(account);
 

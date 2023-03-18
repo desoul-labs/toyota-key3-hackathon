@@ -16,7 +16,7 @@ const TASK_CONTRACT_ADDR = 'Ymi3RJKiQoJUFqpiDoKkoJAtgEcZMmu9QqempavBza57TPw';
 
 function TaskItem({ item }: Props) {
   const [open, setOpen] = useState(false);
-  const { account } = useAccount('//Lily');
+  const { account } = useAccount();
   const [taskCompleted, setTaskCompleted] = useState(false);
   const [owner, setOwner] = useState<string>('');
   const [name, setName] = useState<string>('');

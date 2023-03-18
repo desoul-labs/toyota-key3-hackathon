@@ -26,7 +26,7 @@ function ProposalItemDetail() {
   const [loading, setLoading] = useState(true);
   const { proposalId } = useParams();
   const [score, setScore] = useState<number>(0)
-  const { account } = useAccount('//Lily');
+  const { account } = useAccount();
   const { getProposalCount, getProposal } = useProposalQuery(account.address);
   const { voteProposal } = useProposalTx(account);
   const { getScore } = useTaskQuery(account.address);
