@@ -99,11 +99,11 @@ pub mod proposal_manager {
         #[ink(message)]
         pub fn get_vote_credit(&self, account: AccountId) -> u32 {
             let total_owner = SBTRef::total_supply(&self.sbt);
-            let voter_score = TaskManagerRef::get_score(&self.sbt, account);
-            let total_score = if TaskManagerRef::get_total_score(&self.sbt) == 0 {
+            let voter_score = TaskManagerRef::get_score(&self.task_manager, account);
+            let total_score = if TaskManagerRef::get_total_score(&self.task_manager) == 0 {
                 total_owner as u32
             } else {
-                TaskManagerRef::get_total_score(&self.sbt)
+                TaskManagerRef::get_total_score(&self.task_manager)
             };
 
             let mut temp = (total_owner + 1) / 2;
@@ -138,11 +138,11 @@ pub mod proposal_manager {
 
             let vote_sum: u32 = votes.iter().sum();
             let total_owner = SBTRef::total_supply(&self.sbt);
-            let voter_score = TaskManagerRef::get_score(&self.sbt, Self::env().caller());
-            let total_score = if TaskManagerRef::get_total_score(&self.sbt) == 0 {
+            let voter_score = TaskManagerRef::get_score(&self.task_manager, Self::env().caller());
+            let total_score = if TaskManagerRef::get_total_score(&self.task_manager) == 0 {
                 total_owner as u32
             } else {
-                TaskManagerRef::get_total_score(&self.sbt)
+                TaskManagerRef::get_total_score(&self.task_manager)
             };
 
             let mut temp = (total_owner + 1) / 2;
