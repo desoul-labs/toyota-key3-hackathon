@@ -5,7 +5,6 @@ pub mod traits;
 
 #[openbrush::contract]
 pub mod task_manager {
-    use ink::prelude::vec::Vec;
     use openbrush::{
         contracts::psp34::{
             extensions::{
