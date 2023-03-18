@@ -12,7 +12,7 @@ interface Props {
   item: Item;
 }
 
-const TASK_CONTRACT_ADDR = 'Ymi3RJKiQoJUFqpiDoKkoJAtgEcZMmu9QqempavBza57TPw';
+const TASK_CONTRACT_ADDR = 'WGDmGqK4nmsynyv7ia1WZuqzCtpEHe1K9WPWbvvm9KzWM1Z';
 
 function TaskItem({ item }: Props) {
   const [open, setOpen] = useState(false);
@@ -21,8 +21,9 @@ function TaskItem({ item }: Props) {
   const [errMessage, setErrMessage] = useState<string>('');
   const [owner, setOwner] = useState<string>('');
   const [name, setName] = useState<string>('');
+  const [userEvaluated, setUserEvaluated] = useState<boolean>(false);
   const [evaluation, setEvaluation] = useState<string>('');
-  const { getOwnerOfTask, isTaskCompleted } = useTaskQuery(account.address);
+  const { getOwnerOfTask, isTaskCompleted, isEvaluated } = useTaskQuery(account.address);
   const { completeTask, evaluateTask } = useTaskTx(account);
   const keyring = new Keyring({ type: 'sr25519' });
 
@@ -38,6 +39,16 @@ function TaskItem({ item }: Props) {
     }
     checkTaskCompleted();
   }, [getOwnerOfTask, isTaskCompleted, item.id, keyring])
+
+  useEffect(() => {
+    const checkEvaluated = async () => {
+      const result = await isEvaluated(parseInt(item.id), account.address);
+      if (result) {
+        setUserEvaluated(true)
+      }
+    }
+    checkEvaluated();
+  }, [account.address, isEvaluated, item.id])
 
   const handleClose = () => setOpen(false);
   const handleOpen = () => setOpen(true);
@@ -64,6 +75,7 @@ function TaskItem({ item }: Props) {
   }
 
   const handleTaskCompleted = async () => {
+    console.log(item.id)
     const res = completeTask(parseInt(item.id)).then(async (res) => {
       console.log(res)
     });
@@ -102,7 +114,7 @@ function TaskItem({ item }: Props) {
               />
             </div>
             {taskCompleted ?
-              owner !== account.address ? (
+              owner !== account.address && userEvaluated ? (
                 <Button
                   variant="outlined"
                   // disabled={item.status === 4 || item.status === 5}
@@ -112,7 +124,7 @@ function TaskItem({ item }: Props) {
                   評価
                 </Button>
               ) : null
-              : owner === account.address ? (
+              : owner === account.address && taskCompleted ? (
                 <Button
                   variant="outlined"
                   // disabled={item.status === 4 || item.status === 5}

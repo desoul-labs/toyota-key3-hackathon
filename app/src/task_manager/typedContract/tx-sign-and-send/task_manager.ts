@@ -42,20 +42,6 @@ export default class Methods {
 	}
 
 	/**
-	* takeTask
-	*
-	* @param { ArgumentTypes.Id } id,
-	*/
-	"takeTask" (
-		id: ArgumentTypes.Id,
-		__options ? : GasLimit,
-	){
-		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "takeTask", (events: EventRecord) => {
-			return decodeEvents(events, this.__nativeContract, "task_manager");
-		}, [id], __options);
-	}
-
-	/**
 	* completeTask
 	*
 	* @param { ArgumentTypes.Id } id,
@@ -124,6 +110,22 @@ export default class Methods {
 	}
 
 	/**
+	* isEvaluated
+	*
+	* @param { ArgumentTypes.Id } id,
+	* @param { ArgumentTypes.AccountId } account,
+	*/
+	"isEvaluated" (
+		id: ArgumentTypes.Id,
+		account: ArgumentTypes.AccountId,
+		__options ? : GasLimit,
+	){
+		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "isEvaluated", (events: EventRecord) => {
+			return decodeEvents(events, this.__nativeContract, "task_manager");
+		}, [id, account], __options);
+	}
+
+	/**
 	* evaluateTask
 	*
 	* @param { ArgumentTypes.Id } id,
@@ -137,36 +139,6 @@ export default class Methods {
 		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "evaluateTask", (events: EventRecord) => {
 			return decodeEvents(events, this.__nativeContract, "task_manager");
 		}, [id, evaluation], __options);
-	}
-
-	/**
-	* transfer
-	*
-	* @param { ArgumentTypes.AccountId } to,
-	* @param { ArgumentTypes.Id } id,
-	* @param { Array<(number | string | BN)> } data,
-	*/
-	"transfer" (
-		to: ArgumentTypes.AccountId,
-		id: ArgumentTypes.Id,
-		data: Array<(number | string | BN)>,
-		__options ? : GasLimit,
-	){
-		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "psp34::transfer", (events: EventRecord) => {
-			return decodeEvents(events, this.__nativeContract, "task_manager");
-		}, [to, id, data], __options);
-	}
-
-	/**
-	* totalSupply
-	*
-	*/
-	"totalSupply" (
-		__options ? : GasLimit,
-	){
-		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "psp34::totalSupply", (events: EventRecord) => {
-			return decodeEvents(events, this.__nativeContract, "task_manager");
-		}, [], __options);
 	}
 
 	/**
@@ -202,6 +174,32 @@ export default class Methods {
 	}
 
 	/**
+	* balanceOf
+	*
+	* @param { ArgumentTypes.AccountId } owner,
+	*/
+	"balanceOf" (
+		owner: ArgumentTypes.AccountId,
+		__options ? : GasLimit,
+	){
+		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "psp34::balanceOf", (events: EventRecord) => {
+			return decodeEvents(events, this.__nativeContract, "task_manager");
+		}, [owner], __options);
+	}
+
+	/**
+	* totalSupply
+	*
+	*/
+	"totalSupply" (
+		__options ? : GasLimit,
+	){
+		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "psp34::totalSupply", (events: EventRecord) => {
+			return decodeEvents(events, this.__nativeContract, "task_manager");
+		}, [], __options);
+	}
+
+	/**
 	* collectionId
 	*
 	*/
@@ -211,6 +209,24 @@ export default class Methods {
 		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "psp34::collectionId", (events: EventRecord) => {
 			return decodeEvents(events, this.__nativeContract, "task_manager");
 		}, [], __options);
+	}
+
+	/**
+	* transfer
+	*
+	* @param { ArgumentTypes.AccountId } to,
+	* @param { ArgumentTypes.Id } id,
+	* @param { Array<(number | string | BN)> } data,
+	*/
+	"transfer" (
+		to: ArgumentTypes.AccountId,
+		id: ArgumentTypes.Id,
+		data: Array<(number | string | BN)>,
+		__options ? : GasLimit,
+	){
+		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "psp34::transfer", (events: EventRecord) => {
+			return decodeEvents(events, this.__nativeContract, "task_manager");
+		}, [to, id, data], __options);
 	}
 
 	/**
@@ -229,20 +245,6 @@ export default class Methods {
 		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "psp34::allowance", (events: EventRecord) => {
 			return decodeEvents(events, this.__nativeContract, "task_manager");
 		}, [owner, operator, id], __options);
-	}
-
-	/**
-	* balanceOf
-	*
-	* @param { ArgumentTypes.AccountId } owner,
-	*/
-	"balanceOf" (
-		owner: ArgumentTypes.AccountId,
-		__options ? : GasLimit,
-	){
-		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "psp34::balanceOf", (events: EventRecord) => {
-			return decodeEvents(events, this.__nativeContract, "task_manager");
-		}, [owner], __options);
 	}
 
 	/**

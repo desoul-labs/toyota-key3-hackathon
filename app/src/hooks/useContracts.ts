@@ -18,7 +18,7 @@ import { IdBuilder } from "../sbt/typedContract/types-arguments/sbt";
 import { SignAndSendSuccessResponse } from "@727-ventures/typechain-types";
 
 const SBT_CONTRACT_ADDR = 'XXz1B67qhcj2oL6QrwyANk5Y3zJWxqyw1H2D2H2XvHM498h';
-const TASK_CONTRACT_ADDR = 'Ymi3RJKiQoJUFqpiDoKkoJAtgEcZMmu9QqempavBza57TPw';
+const TASK_CONTRACT_ADDR = 'WGDmGqK4nmsynyv7ia1WZuqzCtpEHe1K9WPWbvvm9KzWM1Z';
 const PROPOSAL_CONTRACT_ADDR = 'Z3DjWPHb83nUVgGNrsLEf3PXiBma4bx3EVfZQN5ZXN4GKQ4';
 
 const createWeightV2 = (api: ApiPromise, refTime: number, proofSize: number) => {
@@ -176,6 +176,20 @@ export function useTaskQuery(caller: string) {
     });
   }, [queryStub]);
 
+  const isEvaluated = useCallback(async (id: number, account: AccountId) => {
+    return new Promise<boolean>(async (resolve, reject) => {
+      const res = await queryStub
+        .isEvaluated(IdBuilder.U32(id), account)
+        .then((ret) => ret.value);
+      if (res.err !== undefined) {
+        reject(res.err);
+      }
+      if (res.ok !== undefined) {
+        resolve(res.ok);
+      }
+    });
+  }, [queryStub])
+
   const getTaskDeadline = useCallback(async (id: number) => {
     return new Promise<number>(async (resolve, reject) => {
       const res = await queryStub
@@ -223,6 +237,7 @@ export function useTaskQuery(caller: string) {
     getOwnerOfTask,
     isTaskCompleted,
     getTaskDeadline,
+    isEvaluated,
     getScore,
     getTotalScore,
   }
@@ -239,7 +254,7 @@ export function useTaskTx(signer: KeyringPair) {
   const createTask = useCallback(async (deadline: number) => {
     return new Promise<SignAndSendSuccessResponse>(async (resolve, reject) => {
       await txStub
-        .createTask(deadline, createWeightV2(api, 6164667490, 867985))
+        .createTask(deadline, createWeightV2(api, 6158997716, 867080))
         .then(
           (val) => {
             if (val.error !== undefined) {
@@ -252,26 +267,6 @@ export function useTaskTx(signer: KeyringPair) {
             console.log(err);
             reject(err);
           },
-        );
-    });
-  }, [api, txStub]);
-
-  const takeTask = useCallback(async (id: number) => {
-    return new Promise<SignAndSendSuccessResponse>(async (resolve, reject) => {
-      await txStub
-        .takeTask(IdBuilder.U32(id), createWeightV2(api, 6166686531, 867985))
-        .then(
-          (val) => {
-            if (val.error !== undefined) {
-              reject(val.error);
-              return;
-            }
-            resolve(val);
-          },
-          (err) => {
-            console.log(err);
-            reject(err);
-          }
         );
     });
   }, [api, txStub]);
@@ -279,7 +274,7 @@ export function useTaskTx(signer: KeyringPair) {
   const completeTask = useCallback(async (id: number) => {
     return new Promise<SignAndSendSuccessResponse>(async (resolve, reject) => {
       await txStub
-        .completeTask(IdBuilder.U32(id), createWeightV2(api, 6165514785, 867985))
+        .completeTask(IdBuilder.U32(id), createWeightV2(api, 6160636488, 867080))
         .then(
           (val) => {
             if (val.error !== undefined) {
@@ -299,7 +294,7 @@ export function useTaskTx(signer: KeyringPair) {
   const evaluateTask = useCallback(async (id: number, score: number) => {
     return new Promise<SignAndSendSuccessResponse>(async (resolve, reject) => {
       await txStub
-        .evaluateTask(IdBuilder.U32(id), score, createWeightV2(api, 8179689813, 1036063))
+        .evaluateTask(IdBuilder.U32(id), score, createWeightV2(api, 6163247666, 867080))
         .then(
           (val) => {
             if (val.error !== undefined) {
@@ -318,7 +313,6 @@ export function useTaskTx(signer: KeyringPair) {
 
   return {
     createTask,
-    takeTask,
     completeTask,
     evaluateTask,
   }
