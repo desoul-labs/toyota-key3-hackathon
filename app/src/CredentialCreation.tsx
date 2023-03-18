@@ -80,6 +80,7 @@ function CredentialCreation() {
           maxWidth: '300px',
         }}
       >
+        <Typography>address: {account.address}</Typography>
         <InputLabel className="text-sm">名前</InputLabel>
         <TextField
           className="w-full"
