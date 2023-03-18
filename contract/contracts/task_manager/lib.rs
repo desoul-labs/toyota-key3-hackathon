@@ -112,6 +112,11 @@ pub mod task_manager {
         }
 
         #[ink(message)]
+        pub fn is_evaluated(&self, id: Id, account: AccountId) -> bool {
+            self.evaluated.get(&(id, account)).is_some()
+        }
+
+        #[ink(message)]
         pub fn evaluate_task(&mut self, id: Id, evaluation: u32) -> Result<(), PSP34Error> {
             if SBTRef::balance_of(&self.sbt, Self::env().caller()) == 0 {
                 return Err(PSP34Error::Custom("Not a member".into()))
@@ -147,6 +152,7 @@ pub mod task_manager {
 
             self.score.insert(&caller, &(evaluator_score.unwrap_or(0) + 1));
             self.total_score += 1;
+            self.evaluated.insert(&(id, caller), &());
             Ok(())
         }
     }
