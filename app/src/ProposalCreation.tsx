@@ -48,6 +48,14 @@ function ProposalCreation() {
   }
 
   const handleSubmit = async () => {
+    if (timeValue === undefined) {
+      toast.error('期限を設定してください')
+      return
+    }
+    if (timeValue < dayjs()) {
+      toast.error('期限を過去に設定することはできません')
+      return
+    }
     const nextProposalId = await getProposalCount();
     const proposal: Proposal = {
       id: nextProposalId,

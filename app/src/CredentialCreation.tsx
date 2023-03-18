@@ -30,8 +30,6 @@ function CredentialCreation() {
     const tokenId = await totalSupply();
 
     const res = mintToken().then(async (res) => {
-      console.log(res)
-
       localStorage.setItem('name', name);
       localStorage.setItem('department', department);
       localStorage.setItem('skill', skill);

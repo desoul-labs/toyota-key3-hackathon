@@ -374,10 +374,40 @@ export function useProposalQuery(caller: string) {
     });
   }, [queryStub]);
 
+  const isVoted = useCallback(async (id: number, voter: string) => {
+    return new Promise<boolean>(async (resolve, reject) => {
+      const res = await queryStub
+        .isVoted(IdBuilder.U32(id), voter)
+        .then((ret) => ret.value);
+      if (res.err !== undefined) {
+        reject(res.err);
+      }
+      if (res.ok !== undefined) {
+        resolve(res.ok);
+      }
+    });
+  }, [queryStub])
+
+  const getVoteCredit = useCallback(async (voter: string) => {
+    return new Promise<number>(async (resolve, reject) => {
+      const res = await queryStub
+        .getVoteCredit(voter)
+        .then((ret) => ret.value);
+      if (res.err !== undefined) {
+        reject(res.err);
+      }
+      if (res.ok !== undefined) {
+        resolve(res.ok);
+      }
+    });
+    }, [queryStub])
+
   return {
     getProposalCount,
     getProposal,
     getCreatorOfProposal,
+    isVoted,
+    getVoteCredit
   }
 }
 
@@ -392,7 +422,7 @@ export function useProposalTx(signer: KeyringPair) {
   const createProposal = useCallback(async (deadline: number, optionCount: number) => {
     return new Promise<SignAndSendSuccessResponse>(async (resolve, reject) => {
       await txStub
-        .createProposal(deadline, optionCount, createWeightV2(api, 6359090864, 915511))
+        .createProposal(deadline, optionCount, createWeightV2(api, 6393721677, 921011))
         .then(
           (val) => {
             if (val.error !== undefined) {

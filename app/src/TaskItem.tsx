@@ -31,13 +31,9 @@ function TaskItem({ item }: Props) {
       const result = await isTaskCompleted(parseInt(item.id));
       setTaskCompleted(result as boolean)
       const owner = await getOwnerOfTask(parseInt(item.id));
-      console.log('item id:' + item.id)
-      console.log('title:' + item.title)
       if (owner) {
         setOwner(keyring.encodeAddress(owner as string).toString());
-        console.log('owner', keyring.encodeAddress(owner as string).toString())
-        console.log('account', account.address)
-        console.log('istaskcomplete', taskCompleted)
+        // console.log('owner', keyring.encodeAddress(owner as string).toString())
       }
     }
     checkTaskCompleted();
@@ -54,7 +50,6 @@ function TaskItem({ item }: Props) {
       else {
         const res = evaluateTask(parseInt(item.id), parseInt(evaluation)).then(async (res) => {
           console.log(res)
-          
         });
         toast.promise(res, {
           pending: '評価をしています',

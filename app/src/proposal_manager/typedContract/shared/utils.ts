@@ -1,7 +1,7 @@
 import proposalEvents from '../event-data/proposal_manager.json';
 import proposalData from '../data/proposal_manager.json';
 
-import type {ContractPromise} from "@polkadot/api-contract";
+import type { ContractPromise } from "@polkadot/api-contract";
 import {handleEventReturn} from "@727-ventures/typechain-types";
 
 export function getTypeDescription(id: number | string, fileName: string): any {

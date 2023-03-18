@@ -23,7 +23,6 @@ function ProposalList() {
     const fetchData = async () => {
       const response = await fetch('https://toyota-hackathon.azurewebsites.net/api/GetProposals');
       const data = await response.json();
-      console.log(data)
       setProposals(data);
     }
     fetchData()

@@ -26,8 +26,9 @@ function ProposalItemDetail() {
   const [loading, setLoading] = useState(true);
   const { proposalId } = useParams();
   const [score, setScore] = useState<number>(0)
+  const [isUserVoted, setIsUserVoted] = useState<boolean>(false)
   const account = useAccount();
-  const { getProposalCount, getProposal } = useProposalQuery(account.address);
+  const { getProposalCount, getProposal, isVoted, getVoteCredit } = useProposalQuery(account.address);
   const { voteProposal } = useProposalTx(account);
   const { getScore } = useTaskQuery(account.address);
   const navigate = useNavigate();
@@ -37,7 +38,6 @@ function ProposalItemDetail() {
       const response = await fetch(`https://toyota-hackathon.azurewebsites.net/api/proposal/${proposalId}`);
       const data = await response.json();
       setProposal(data);
-      console.log(data)
     }
     fetchData()
     setLoading(false)
@@ -45,12 +45,15 @@ function ProposalItemDetail() {
 
   useEffect(() => {
     const fetchScore = async () => {
-      const score = await getScore(account.address)
+      // const score = await getScore(account.address)
+      const score = await getVoteCredit(account.address)
       setScore(score)
       setTotalVotes(score)
+      const checkVoted = await isVoted(parseInt(proposalId!), account.address)
+      setIsUserVoted(checkVoted)
     }
     fetchScore()
-  }, [account, getScore])
+  }, [account, getVoteCredit, isVoted, proposalId])
 
   useEffect(() => {
     const fetchProposal = async () => {
@@ -90,11 +93,19 @@ function ProposalItemDetail() {
   const handleClose = () => setLoading(false)
 
   const handleSubmit = async () => {
-    // setLoading(true)
+    if (totalVotes !== 0) {
+      toast.error('全ての票を選択してください')
+      return
+    }
     const res = await voteProposal(parseInt(proposalId!), votes).then(async (res) => {
       console.log(res)
     })
-    // setLoading(false)
+    // the res is void not promise<void>, so toast.promise is not working
+    // toast.promise(res, {
+    //   pending: '提案を作成中...',
+    //   success: '提案を作成しました',
+    //   error: '提案の作成に失敗しました'
+    // });
   }
 
   return (
@@ -145,34 +156,36 @@ function ProposalItemDetail() {
             </div>
           ))
           :
-          <>
-            {optionVotes.map((option, index) => (
-              <div className="flex items-center" key={index}>
-                <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center mr-2">
-                  <span className="text-white font-medium">{votes[index]}</span>
+          isUserVoted ?
+            <>
+              {optionVotes.map((option, index) => (
+                <div className="flex items-center" key={index}>
+                  <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center mr-2">
+                    <span className="text-white font-medium">{votes[index]}</span>
+                  </div>
+                  <Button sx={{
+                    marginTop: 1, marginButton: 1, width: "80%"
+                  }} onClick={() => IncreaseNumber(index)} variant="outlined">{index + 1}. {option}</Button>
                 </div>
-                <Button sx={{
-                  marginTop: 1, marginButton: 1, width: "80%"
-                }} onClick={() => IncreaseNumber(index)} variant="outlined">{index + 1}. {option}</Button>
+              ))}
+              <div className="flex items-center justify-center mt-2 flex-wrap">
+                <div className="mr-2 text-center">残りの票数: </div>
+                <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center mr-2">
+                  <span className="text-white font-medium">{totalVotes}</span>
+                </div>
+                <div className="flex flex-col w-full justify-center mt-3">
+                  <Button variant="contained" color="error" onClick={() => cancelClicked()} className="w-full mx-2">
+                    クリア
+                  </Button>
+                </div>
+                <div className="flex flex-col w-full justify-center mt-3">
+                  <Button onClick={() => handleSubmit()} variant="contained" className="w-full mx-2">
+                    決定
+                  </Button>
+                </div>
               </div>
-            ))}
-            <div className="flex items-center justify-center mt-2 flex-wrap">
-              <div className="mr-2 text-center">残りの票数: </div>
-              <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center mr-2">
-                <span className="text-white font-medium">{totalVotes}</span>
-              </div>
-              <div className="flex flex-col w-full justify-center mt-3">
-                <Button variant="contained" color="error" onClick={() => cancelClicked()} className="w-full mx-2">
-                  クリア
-                </Button>
-              </div>
-              <div className="flex flex-col w-full justify-center mt-3">
-                <Button onClick={() => handleSubmit()} variant="contained" className="w-full mx-2">
-                  決定
-                </Button>
-              </div>
-            </div>
-          </>
+            </>
+            : null
         }
       </div >
     </div >

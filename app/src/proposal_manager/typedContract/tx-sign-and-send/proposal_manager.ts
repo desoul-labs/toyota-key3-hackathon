@@ -44,6 +44,22 @@ export default class Methods {
 	}
 
 	/**
+	* isVoted
+	*
+	* @param { ArgumentTypes.Id } id,
+	* @param { ArgumentTypes.AccountId } account,
+	*/
+	"isVoted" (
+		id: ArgumentTypes.Id,
+		account: ArgumentTypes.AccountId,
+		__options ? : GasLimit,
+	){
+		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "isVoted", (events: EventRecord) => {
+			return decodeEvents(events, this.__nativeContract, "proposal_manager");
+		}, [id, account], __options);
+	}
+
+	/**
 	* getProposal
 	*
 	* @param { ArgumentTypes.Id } id,
@@ -55,6 +71,20 @@ export default class Methods {
 		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "getProposal", (events: EventRecord) => {
 			return decodeEvents(events, this.__nativeContract, "proposal_manager");
 		}, [id], __options);
+	}
+
+	/**
+	* getVoteCredit
+	*
+	* @param { ArgumentTypes.AccountId } account,
+	*/
+	"getVoteCredit" (
+		account: ArgumentTypes.AccountId,
+		__options ? : GasLimit,
+	){
+		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "getVoteCredit", (events: EventRecord) => {
+			return decodeEvents(events, this.__nativeContract, "proposal_manager");
+		}, [account], __options);
 	}
 
 	/**
@@ -74,17 +104,35 @@ export default class Methods {
 	}
 
 	/**
-	* balanceOf
+	* allowance
 	*
 	* @param { ArgumentTypes.AccountId } owner,
+	* @param { ArgumentTypes.AccountId } operator,
+	* @param { ArgumentTypes.Id | null } id,
 	*/
-	"balanceOf" (
+	"allowance" (
 		owner: ArgumentTypes.AccountId,
+		operator: ArgumentTypes.AccountId,
+		id: ArgumentTypes.Id | null,
 		__options ? : GasLimit,
 	){
-		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "psp34::balanceOf", (events: EventRecord) => {
+		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "psp34::allowance", (events: EventRecord) => {
 			return decodeEvents(events, this.__nativeContract, "proposal_manager");
-		}, [owner], __options);
+		}, [owner, operator, id], __options);
+	}
+
+	/**
+	* ownerOf
+	*
+	* @param { ArgumentTypes.Id } id,
+	*/
+	"ownerOf" (
+		id: ArgumentTypes.Id,
+		__options ? : GasLimit,
+	){
+		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "psp34::ownerOf", (events: EventRecord) => {
+			return decodeEvents(events, this.__nativeContract, "proposal_manager");
+		}, [id], __options);
 	}
 
 	/**
@@ -106,17 +154,29 @@ export default class Methods {
 	}
 
 	/**
-	* ownerOf
+	* totalSupply
 	*
-	* @param { ArgumentTypes.Id } id,
 	*/
-	"ownerOf" (
-		id: ArgumentTypes.Id,
+	"totalSupply" (
 		__options ? : GasLimit,
 	){
-		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "psp34::ownerOf", (events: EventRecord) => {
+		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "psp34::totalSupply", (events: EventRecord) => {
 			return decodeEvents(events, this.__nativeContract, "proposal_manager");
-		}, [id], __options);
+		}, [], __options);
+	}
+
+	/**
+	* balanceOf
+	*
+	* @param { ArgumentTypes.AccountId } owner,
+	*/
+	"balanceOf" (
+		owner: ArgumentTypes.AccountId,
+		__options ? : GasLimit,
+	){
+		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "psp34::balanceOf", (events: EventRecord) => {
+			return decodeEvents(events, this.__nativeContract, "proposal_manager");
+		}, [owner], __options);
 	}
 
 	/**
@@ -150,33 +210,17 @@ export default class Methods {
 	}
 
 	/**
-	* totalSupply
+	* tokenByIndex
 	*
+	* @param { (string | number | BN) } index,
 	*/
-	"totalSupply" (
+	"tokenByIndex" (
+		index: (string | number | BN),
 		__options ? : GasLimit,
 	){
-		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "psp34::totalSupply", (events: EventRecord) => {
+		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "psp34Enumerable::tokenByIndex", (events: EventRecord) => {
 			return decodeEvents(events, this.__nativeContract, "proposal_manager");
-		}, [], __options);
-	}
-
-	/**
-	* allowance
-	*
-	* @param { ArgumentTypes.AccountId } owner,
-	* @param { ArgumentTypes.AccountId } operator,
-	* @param { ArgumentTypes.Id | null } id,
-	*/
-	"allowance" (
-		owner: ArgumentTypes.AccountId,
-		operator: ArgumentTypes.AccountId,
-		id: ArgumentTypes.Id | null,
-		__options ? : GasLimit,
-	){
-		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "psp34::allowance", (events: EventRecord) => {
-			return decodeEvents(events, this.__nativeContract, "proposal_manager");
-		}, [owner, operator, id], __options);
+		}, [index], __options);
 	}
 
 	/**
@@ -193,20 +237,6 @@ export default class Methods {
 		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "psp34Enumerable::ownersTokenByIndex", (events: EventRecord) => {
 			return decodeEvents(events, this.__nativeContract, "proposal_manager");
 		}, [owner, index], __options);
-	}
-
-	/**
-	* tokenByIndex
-	*
-	* @param { (string | number | BN) } index,
-	*/
-	"tokenByIndex" (
-		index: (string | number | BN),
-		__options ? : GasLimit,
-	){
-		return txSignAndSend( this.__apiPromise, this.__nativeContract, this.__keyringPair, "psp34Enumerable::tokenByIndex", (events: EventRecord) => {
-			return decodeEvents(events, this.__nativeContract, "proposal_manager");
-		}, [index], __options);
 	}
 
 	/**

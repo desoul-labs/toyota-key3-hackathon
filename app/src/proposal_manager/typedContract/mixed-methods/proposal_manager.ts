@@ -53,6 +53,21 @@ export default class Methods {
 	}
 
 	/**
+	* isVoted
+	*
+	* @param { ArgumentTypes.Id } id,
+	* @param { ArgumentTypes.AccountId } account,
+	* @returns { Result<boolean, ReturnTypes.LangError> }
+	*/
+	"isVoted" (
+		id: ArgumentTypes.Id,
+		account: ArgumentTypes.AccountId,
+		__options: GasLimit,
+	): Promise< QueryReturnType< Result<boolean, ReturnTypes.LangError> > >{
+		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "isVoted", [id, account], __options, (result) => { return handleReturnType(result, getTypeDescription(17, 'proposal_manager')); });
+	}
+
+	/**
 	* getProposal
 	*
 	* @param { ArgumentTypes.Id } id,
@@ -62,7 +77,20 @@ export default class Methods {
 		id: ArgumentTypes.Id,
 		__options: GasLimit,
 	): Promise< QueryReturnType< Result<Array<number>, ReturnTypes.LangError> > >{
-		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "getProposal", [id], __options, (result) => { return handleReturnType(result, getTypeDescription(16, 'proposal_manager')); });
+		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "getProposal", [id], __options, (result) => { return handleReturnType(result, getTypeDescription(19, 'proposal_manager')); });
+	}
+
+	/**
+	* getVoteCredit
+	*
+	* @param { ArgumentTypes.AccountId } account,
+	* @returns { Result<number, ReturnTypes.LangError> }
+	*/
+	"getVoteCredit" (
+		account: ArgumentTypes.AccountId,
+		__options: GasLimit,
+	): Promise< QueryReturnType< Result<number, ReturnTypes.LangError> > >{
+		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "getVoteCredit", [account], __options, (result) => { return handleReturnType(result, getTypeDescription(20, 'proposal_manager')); });
 	}
 
 	/**
@@ -83,16 +111,33 @@ export default class Methods {
 	}
 
 	/**
-	* balanceOf
+	* allowance
 	*
 	* @param { ArgumentTypes.AccountId } owner,
-	* @returns { Result<number, ReturnTypes.LangError> }
+	* @param { ArgumentTypes.AccountId } operator,
+	* @param { ArgumentTypes.Id | null } id,
+	* @returns { Result<boolean, ReturnTypes.LangError> }
 	*/
-	"balanceOf" (
+	"allowance" (
 		owner: ArgumentTypes.AccountId,
+		operator: ArgumentTypes.AccountId,
+		id: ArgumentTypes.Id | null,
 		__options: GasLimit,
-	): Promise< QueryReturnType< Result<number, ReturnTypes.LangError> > >{
-		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "psp34::balanceOf", [owner], __options, (result) => { return handleReturnType(result, getTypeDescription(17, 'proposal_manager')); });
+	): Promise< QueryReturnType< Result<boolean, ReturnTypes.LangError> > >{
+		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "psp34::allowance", [owner, operator, id], __options, (result) => { return handleReturnType(result, getTypeDescription(17, 'proposal_manager')); });
+	}
+
+	/**
+	* ownerOf
+	*
+	* @param { ArgumentTypes.Id } id,
+	* @returns { Result<ReturnTypes.AccountId | null, ReturnTypes.LangError> }
+	*/
+	"ownerOf" (
+		id: ArgumentTypes.Id,
+		__options: GasLimit,
+	): Promise< QueryReturnType< Result<ReturnTypes.AccountId | null, ReturnTypes.LangError> > >{
+		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "psp34::ownerOf", [id], __options, (result) => { return handleReturnType(result, getTypeDescription(22, 'proposal_manager')); });
 	}
 
 	/**
@@ -115,16 +160,27 @@ export default class Methods {
 	}
 
 	/**
-	* ownerOf
+	* totalSupply
 	*
-	* @param { ArgumentTypes.Id } id,
-	* @returns { Result<ReturnTypes.AccountId | null, ReturnTypes.LangError> }
+	* @returns { Result<ReturnNumber, ReturnTypes.LangError> }
 	*/
-	"ownerOf" (
-		id: ArgumentTypes.Id,
+	"totalSupply" (
 		__options: GasLimit,
-	): Promise< QueryReturnType< Result<ReturnTypes.AccountId | null, ReturnTypes.LangError> > >{
-		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "psp34::ownerOf", [id], __options, (result) => { return handleReturnType(result, getTypeDescription(18, 'proposal_manager')); });
+	): Promise< QueryReturnType< Result<ReturnNumber, ReturnTypes.LangError> > >{
+		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "psp34::totalSupply", [], __options, (result) => { return handleReturnType(result, getTypeDescription(24, 'proposal_manager')); });
+	}
+
+	/**
+	* balanceOf
+	*
+	* @param { ArgumentTypes.AccountId } owner,
+	* @returns { Result<number, ReturnTypes.LangError> }
+	*/
+	"balanceOf" (
+		owner: ArgumentTypes.AccountId,
+		__options: GasLimit,
+	): Promise< QueryReturnType< Result<number, ReturnTypes.LangError> > >{
+		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "psp34::balanceOf", [owner], __options, (result) => { return handleReturnType(result, getTypeDescription(20, 'proposal_manager')); });
 	}
 
 	/**
@@ -135,7 +191,7 @@ export default class Methods {
 	"collectionId" (
 		__options: GasLimit,
 	): Promise< QueryReturnType< Result<ReturnTypes.Id, ReturnTypes.LangError> > >{
-		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "psp34::collectionId", [], __options, (result) => { return handleReturnType(result, getTypeDescription(20, 'proposal_manager')); });
+		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "psp34::collectionId", [], __options, (result) => { return handleReturnType(result, getTypeDescription(25, 'proposal_manager')); });
 	}
 
 	/**
@@ -158,31 +214,16 @@ export default class Methods {
 	}
 
 	/**
-	* totalSupply
+	* tokenByIndex
 	*
-	* @returns { Result<ReturnNumber, ReturnTypes.LangError> }
+	* @param { (string | number | BN) } index,
+	* @returns { Result<Result<ReturnTypes.Id, ReturnTypes.PSP34Error>, ReturnTypes.LangError> }
 	*/
-	"totalSupply" (
+	"tokenByIndex" (
+		index: (string | number | BN),
 		__options: GasLimit,
-	): Promise< QueryReturnType< Result<ReturnNumber, ReturnTypes.LangError> > >{
-		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "psp34::totalSupply", [], __options, (result) => { return handleReturnType(result, getTypeDescription(23, 'proposal_manager')); });
-	}
-
-	/**
-	* allowance
-	*
-	* @param { ArgumentTypes.AccountId } owner,
-	* @param { ArgumentTypes.AccountId } operator,
-	* @param { ArgumentTypes.Id | null } id,
-	* @returns { Result<boolean, ReturnTypes.LangError> }
-	*/
-	"allowance" (
-		owner: ArgumentTypes.AccountId,
-		operator: ArgumentTypes.AccountId,
-		id: ArgumentTypes.Id | null,
-		__options: GasLimit,
-	): Promise< QueryReturnType< Result<boolean, ReturnTypes.LangError> > >{
-		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "psp34::allowance", [owner, operator, id], __options, (result) => { return handleReturnType(result, getTypeDescription(24, 'proposal_manager')); });
+	): Promise< QueryReturnType< Result<Result<ReturnTypes.Id, ReturnTypes.PSP34Error>, ReturnTypes.LangError> > >{
+		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "psp34Enumerable::tokenByIndex", [index], __options, (result) => { return handleReturnType(result, getTypeDescription(26, 'proposal_manager')); });
 	}
 
 	/**
@@ -197,20 +238,7 @@ export default class Methods {
 		index: (string | number | BN),
 		__options: GasLimit,
 	): Promise< QueryReturnType< Result<Result<ReturnTypes.Id, ReturnTypes.PSP34Error>, ReturnTypes.LangError> > >{
-		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "psp34Enumerable::ownersTokenByIndex", [owner, index], __options, (result) => { return handleReturnType(result, getTypeDescription(25, 'proposal_manager')); });
-	}
-
-	/**
-	* tokenByIndex
-	*
-	* @param { (string | number | BN) } index,
-	* @returns { Result<Result<ReturnTypes.Id, ReturnTypes.PSP34Error>, ReturnTypes.LangError> }
-	*/
-	"tokenByIndex" (
-		index: (string | number | BN),
-		__options: GasLimit,
-	): Promise< QueryReturnType< Result<Result<ReturnTypes.Id, ReturnTypes.PSP34Error>, ReturnTypes.LangError> > >{
-		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "psp34Enumerable::tokenByIndex", [index], __options, (result) => { return handleReturnType(result, getTypeDescription(25, 'proposal_manager')); });
+		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "psp34Enumerable::ownersTokenByIndex", [owner, index], __options, (result) => { return handleReturnType(result, getTypeDescription(26, 'proposal_manager')); });
 	}
 
 	/**
@@ -225,7 +253,7 @@ export default class Methods {
 		key: Array<(number | string | BN)>,
 		__options: GasLimit,
 	): Promise< QueryReturnType< Result<Array<number> | null, ReturnTypes.LangError> > >{
-		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "psp34Metadata::getAttribute", [id, key], __options, (result) => { return handleReturnType(result, getTypeDescription(27, 'proposal_manager')); });
+		return queryOkJSON( this.__apiPromise, this.__nativeContract, this.__callerAddress, "psp34Metadata::getAttribute", [id, key], __options, (result) => { return handleReturnType(result, getTypeDescription(28, 'proposal_manager')); });
 	}
 
 }
