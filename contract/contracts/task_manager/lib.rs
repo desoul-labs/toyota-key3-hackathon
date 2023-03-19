@@ -20,6 +20,7 @@ pub mod task_manager {
         },
     };
     use sbt::traits::SBTRef;
+    use crate::traits::*;
 
     #[ink(storage)]
     #[derive(Storage)]
@@ -40,6 +41,18 @@ pub mod task_manager {
     impl PSP34 for TaskManager {}
     impl PSP34Enumerable for TaskManager {}
     impl PSP34Metadata for TaskManager {}
+
+    impl TaskManagerTrait for TaskManager {
+        #[ink(message)]
+        fn get_score(&self, account: AccountId) -> u32 {
+            self.score.get(&account).unwrap_or(0)
+        }
+
+        #[ink(message)]
+        fn get_total_score(&self) -> u32 {
+            self.total_score
+        }
+    }
 
     impl TaskManager {
         #[ink(constructor)]
