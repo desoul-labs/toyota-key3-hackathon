@@ -114,7 +114,7 @@ function TaskItem({ item }: Props) {
               />
             </div>
             {taskCompleted ?
-              owner !== account.address && userEvaluated ? (
+              owner !== account.address && !userEvaluated ? (
                 <Button
                   variant="outlined"
                   // disabled={item.status === 4 || item.status === 5}
@@ -124,7 +124,7 @@ function TaskItem({ item }: Props) {
                   評価
                 </Button>
               ) : null
-              : owner === account.address && taskCompleted ? (
+              : owner === account.address && !taskCompleted ? (
                 <Button
                   variant="outlined"
                   // disabled={item.status === 4 || item.status === 5}
