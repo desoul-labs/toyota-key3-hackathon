@@ -436,7 +436,7 @@ export function useProposalTx(signer: KeyringPair) {
   const voteProposal = useCallback(async (id: number, votes: number[]) => {
     return new Promise<SignAndSendSuccessResponse>(async (resolve, reject) => {
       await txStub
-        .voteProposal(IdBuilder.U32(id), votes, createWeightV2(api, 13746373035, 1457110))
+        .voteProposal(IdBuilder.U32(id), votes, createWeightV2(api, 20586205253, 2096043))
         .then(
           (val) => {
             if (val.error !== undefined) {
