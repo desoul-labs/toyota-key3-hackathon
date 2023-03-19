@@ -21,6 +21,7 @@ function ProposalItemDetail() {
   const [optionVotes, setOptionVotes] = useState<number[]>([0]);
   const [totalVotedVotes, setTotalVotedVotes] = useState<number>(0)
   const [totalVotes, setTotalVotes] = useState<number>(0)
+  const [voteCounts, setVoteCounts] = useState<number[]>([0])
   const [votes, setVotes] = useState<number[]>([])
   const [proposal, setProposal] = useState<Proposal>()
   const [loading, setLoading] = useState(true);
@@ -57,7 +58,7 @@ function ProposalItemDetail() {
       setIsUserVoted(checkVoted)
     }
     fetchScore()
-  }, [account, getVoteCredit, isVoted, proposalId])
+  }, [account.address, getVoteCredit, isVoted, proposalId])
 
   useEffect(() => {
     const fetchProposal = async () => {
@@ -66,6 +67,7 @@ function ProposalItemDetail() {
       if (proposalOptions) {
         setOptionVotes(proposalOptions)
         setVotes(Array.from({ length: proposalOptions.length }, () => 0))
+        setVoteCounts(Array.from({ length: proposalOptions.length }, () => 0))
         setTotalVotedVotes(proposalOptions.reduce((a, b) => a + b, 0))
       }
     }
@@ -73,21 +75,26 @@ function ProposalItemDetail() {
   }, [getProposal, proposalId])
 
   const IncreaseNumber = (index: number) => {
-    if (totalVotes <= 0) {
-      toast.error('You have no more votes')
+    const newVoteCounts = [...voteCounts];
+    newVoteCounts[index] += 1;
+    const creditConsumed = newVoteCounts[index] ** 2
+    if (totalVotes - creditConsumed < 0) {
+      toast.error('票数が足りません')
       return
     }
-    setTotalVotes(totalVotes - 1)
+    setVoteCounts(newVoteCounts);
+    setTotalVotes(totalVotes - creditConsumed)
     setVotes(prevVotes => {
       const newVotes = [...prevVotes];
-      newVotes[index] += 1;
+      newVotes[index] += creditConsumed;
       return newVotes;
-    })
+    });
   }
 
   const cancelClicked = () => {
     setTotalVotes(score)
     setVotes(Array.from({ length: optionVotes.length }, () => 0))
+    setVoteCounts(Array.from({ length: optionVotes.length }, () => 0))
   }
 
   const BackButtonClicked = () => {
@@ -97,19 +104,15 @@ function ProposalItemDetail() {
   const handleClose = () => setLoading(false)
 
   const handleSubmit = async () => {
-    if (totalVotes !== 0) {
-      toast.error('全ての票を選択してください')
-      return
-    }
-    const res = await voteProposal(parseInt(proposalId!), votes).then(async (res) => {
-      console.log(res)
+    const res = voteProposal(parseInt(proposalId!), votes).then(async (res) => {
+      console.log(res);
+      navigate(`/proposal`);
     })
-    // the res is void not promise<void>, so toast.promise is not working
-    // toast.promise(res, {
-    //   pending: '提案を作成中...',
-    //   success: '提案を作成しました',
-    //   error: '提案の作成に失敗しました'
-    // });
+    toast.promise(res, {
+      pending: '投票中です。少々お待ちください。',
+      success: '投票しました。ありがとうございます！',
+      error: '投票できませんでした。既に投票されていませんか？'
+    });
   }
 
   return (
@@ -138,7 +141,7 @@ function ProposalItemDetail() {
             <AccessAlarmIcon />
             <Typography sx={{ marginRight: 3 }}>{new Date(parseInt(proposal?.expiredAt || "0") * 1000).toLocaleString().slice(0, 10)}</Typography>
             <Person2Icon />
-            <Typography>user1</Typography>
+            <Typography>{proposal?.user}</Typography>
           </div>
           <Typography sx={{ marginTop: 2 }}>{proposal?.description}</Typography>
         </div>

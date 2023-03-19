@@ -137,24 +137,8 @@ pub mod proposal_manager {
             }
 
             let vote_sum: u32 = votes.iter().sum();
-            let total_owner = SBTRef::total_supply(&self.sbt);
-            let voter_score = TaskManagerRef::get_score(&self.task_manager, Self::env().caller());
-            let total_score = if TaskManagerRef::get_total_score(&self.task_manager) == 0 {
-                total_owner as u32
-            } else {
-                TaskManagerRef::get_total_score(&self.task_manager)
-            };
-
-            let mut temp = (total_owner + 1) / 2;
-            let mut factor = total_owner;
-            while temp < factor {
-                factor = temp;
-                temp = (total_owner / temp + temp) / 2;
-            }
-
-            let normalized_voter_score = if voter_score == 0 { 1 } else { voter_score };
-            let vote_credit = factor as u32 * normalized_voter_score * 100 / total_score;
-            if vote_sum != vote_credit {
+            let vote_credit = self.get_vote_credit(Self::env().caller());
+            if vote_sum > vote_credit {
                 return Err(PSP34Error::Custom("Invalid vote".into()))
             }
 

@@ -84,9 +84,9 @@ function ProposalCreation() {
     })
 
     toast.promise(res, {
-      pending: '提案を作成中...',
-      success: '提案を作成しました',
-      error: '提案の作成に失敗しました'
+      pending: '提案を作成中です。少々お待ちください。',
+      success: '提案を作成しました。投票を呼びかけましょう！',
+      error: '提案を作成できません。もう一度お試しください。'
     });
   }
 

@@ -60,9 +60,9 @@ function CredentialCreation() {
     });
 
     toast.promise(res, {
-      pending: '社員証を作成中...',
-      success: '社員証を作成できた！',
-      error: '社員証を作成できなかった、、、\n既に社員証をお持ちですか？',
+      pending: '社員証を作成中です。少々お待ちください。',
+      success: '社員証を作成しました。仕事頑張りましょう！',
+      error: '社員証を作成できません。既に社員証をお持ちですか？',
     });
   };
 

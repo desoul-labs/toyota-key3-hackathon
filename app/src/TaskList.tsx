@@ -78,9 +78,9 @@ function TaskList() {
     });
 
     toast.promise(res, {
-      pending: 'タスクを作成中です',
-      success: 'タスクを作成しました',
-      error: 'タスクの作成に失敗しました'
+      pending: 'タスクを作成中です。少々お待ちください。',
+      success: 'タスクを作成しました。完成まで頑張りましょう！',
+      error: 'タスクを作成できません。もう一度お試しください。'
     });
   }
 
