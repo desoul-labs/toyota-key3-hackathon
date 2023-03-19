@@ -27,7 +27,7 @@ function ProposalItemDetail() {
   const [loading, setLoading] = useState(true);
   const { proposalId } = useParams();
   const [score, setScore] = useState<number>(0)
-  const [isUserVoted, setIsUserVoted] = useState<boolean>(false)
+  const [isUserVoted, setIsUserVoted] = useState<boolean>(true)
   const account = useAccount();
   const { getProposalCount, getProposal, isVoted, getVoteCredit } = useProposalQuery(account.address);
   const { voteProposal } = useProposalTx(account);
@@ -145,55 +145,47 @@ function ProposalItemDetail() {
           </div>
           <Typography sx={{ marginTop: 2 }}>{proposal?.description}</Typography>
         </div>
-        {proposal !== undefined && proposal !== null && parseInt(proposal!.expiredAt) * 1000 < Date.now() &&
+        {proposal !== undefined && proposal !== null &&
           proposal!.options.map((option, index) => (
             <div className="flex items-center" key={index}>
               <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center mr-2">
                 <span className="text-white font-medium">{votes[index]}</span>
               </div>
-              {votes[index] === Math.max(...votes) ?
-                <Button sx={{
-                  marginTop: 1, marginButton: 1, width: "80%", backgroundImage: `linear-gradient(to right, #b9ccff ${optionVotes[index] / totalVotedVotes * 100}%, white ${votes[index] / totalVotedVotes * 100}%, white 100%)`
-                }} variant="outlined">{index + 1}. {option}</Button>
-                :
-                <Button sx={{
-                  marginTop: 1, marginButton: 1, width: "80%", backgroundImage: `linear-gradient(to right, #c3c3c3 ${optionVotes[index] / totalVotedVotes * 100}%, white ${votes[index] / totalVotedVotes * 100}%, white 100%)`
-                }} variant="outlined">{index + 1}. {option}</Button>
+              {
+                isUserVoted ?
+                  (votes[index] === Math.max(...votes) ?
+                    <Button sx={{
+                      marginTop: 1, marginButton: 1, width: "80%", backgroundImage: `linear-gradient(to right, #b9ccff ${optionVotes[index] / totalVotedVotes * 100}%, white ${votes[index] / totalVotedVotes * 100}%, white 100%)`
+                    }} variant="outlined" disabled>{index + 1}. {option}</Button>
+                    :
+                    <Button sx={{
+                      marginTop: 1, marginButton: 1, width: "80%", backgroundImage: `linear-gradient(to right, #c3c3c3 ${optionVotes[index] / totalVotedVotes * 100}%, white ${votes[index] / totalVotedVotes * 100}%, white 100%)`
+                    }} variant="outlined" disabled>{index + 1}. {option}</Button>)
+                  :
+                  <Button sx={{
+                    marginTop: 1, marginButton: 1, width: "80%"
+                  }} onClick={() => IncreaseNumber(index)} variant="outlined">{index + 1}. {option}</Button>
               }
             </div>
-          ))}
-
-        {proposal !== undefined && proposal !== null && parseInt(proposal!.expiredAt) * 1000 > Date.now() && !isUserVoted ?
-          <>
-            {proposal.options.map((option, index) => (
-              <div className="flex items-center" key={index}>
-                <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center mr-2">
-                  <span className="text-white font-medium">{votes[index]}</span>
-                </div>
-                <Button sx={{
-                  marginTop: 1, marginButton: 1, width: "80%"
-                }} onClick={() => IncreaseNumber(index)} variant="outlined">{index + 1}. {option}</Button>
-              </div>
-            ))}
-            <div className="flex items-center justify-center mt-2 flex-wrap">
-              <div className="mr-2 text-center">残りの票数: </div>
-              <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center mr-2">
-                <span className="text-white font-medium">{totalVotes}</span>
-              </div>
-              <div className="flex flex-col w-full justify-center mt-3">
-                <Button variant="contained" color="error" onClick={() => cancelClicked()} className="w-full mx-2">
-                  クリア
-                </Button>
-              </div>
-              <div className="flex flex-col w-full justify-center mt-3">
-                <Button onClick={() => handleSubmit()} variant="contained" className="w-full mx-2">
-                  決定
-                </Button>
-              </div>
-            </div>
-          </>
-          : null
+          ))
         }
+        {!isUserVoted &&
+          <div className="flex items-center justify-center mt-2 flex-wrap">
+            <div className="mr-2 text-center">残りの票数: </div>
+            <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center mr-2">
+              <span className="text-white font-medium">{totalVotes}</span>
+            </div>
+            <div className="flex flex-col w-full justify-center mt-3">
+              <Button variant="contained" color="error" onClick={() => cancelClicked()} className="w-full mx-2">
+                クリア
+              </Button>
+            </div>
+            <div className="flex flex-col w-full justify-center mt-3">
+              <Button onClick={() => handleSubmit()} variant="contained" className="w-full mx-2">
+                決定
+              </Button>
+            </div>
+          </div>}
       </div >
     </div >
   );

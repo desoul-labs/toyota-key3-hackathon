@@ -19,7 +19,7 @@ import { SignAndSendSuccessResponse } from "@727-ventures/typechain-types";
 
 const SBT_CONTRACT_ADDR = 'WRFXJrDKdqzGqwdhhwrFMEmqW3GzTQM5JWSaGA3DRWdqTKZ';
 const TASK_CONTRACT_ADDR = 'W1YVcMWmVA6NuyiFt5TmfoCPhqfU49CM26vZTK6gjUB2FS5';
-const PROPOSAL_CONTRACT_ADDR = 'bE3zgoZaUJ8v83zGd3at83VoZguusiCG3ih7xXauREGJUpz';
+const PROPOSAL_CONTRACT_ADDR = 'W73epWHQvRFPUPmnx9ebujw5LdaAyp6Nu1eya5qh4oqvQEK';
 
 const createWeightV2 = (api: ApiPromise, refTime: number, proofSize: number) => {
   return {
@@ -416,7 +416,7 @@ export function useProposalTx(signer: KeyringPair) {
   const createProposal = useCallback(async (deadline: number, optionCount: number) => {
     return new Promise<SignAndSendSuccessResponse>(async (resolve, reject) => {
       await txStub
-        .createProposal(deadline, optionCount, createWeightV2(api, 6257725623, 874641))
+        .createProposal(deadline, optionCount, createWeightV2(api, 6266005254, 875961))
         .then(
           (val) => {
             if (val.error !== undefined) {
@@ -436,7 +436,7 @@ export function useProposalTx(signer: KeyringPair) {
   const voteProposal = useCallback(async (id: number, votes: number[]) => {
     return new Promise<SignAndSendSuccessResponse>(async (resolve, reject) => {
       await txStub
-        .voteProposal(IdBuilder.U32(id), votes, createWeightV2(api, 13746373035, 1455660))
+        .voteProposal(IdBuilder.U32(id), votes, createWeightV2(api, 13746373035, 1457110))
         .then(
           (val) => {
             if (val.error !== undefined) {

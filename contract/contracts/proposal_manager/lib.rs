@@ -145,7 +145,11 @@ pub mod proposal_manager {
             for (i, vote) in votes.iter().enumerate() {
                 proposal[i] += vote;
             }
-            self.voted.get(&id).unwrap_or_default().push(Self::env().caller());
+            self.proposal.insert(&id, &proposal);
+
+            let mut voted = self.voted.get(&id).unwrap_or_default();
+            voted.push(Self::env().caller());
+            self.voted.insert(&id, &voted);
 
             Ok(())
         }
