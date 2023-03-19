@@ -61,6 +61,8 @@ function TaskItem({ item }: Props) {
       else {
         const res = evaluateTask(parseInt(item.id), parseInt(evaluation)).then(async (res) => {
           console.log(res)
+          setUserEvaluated(true)
+          setOpen(false);
         });
         toast.promise(res, {
           pending: '評価中です。少々お待ちください。',
@@ -124,10 +126,10 @@ function TaskItem({ item }: Props) {
                   評価
                 </Button>
               ) : null
-              : owner === account.address && !taskCompleted ? (
+              : owner === account.address ? (
                 <Button
                   variant="outlined"
-                  // disabled={item.status === 4 || item.status === 5}
+                  disabled={taskCompleted}
                   className="bg-blue-500 text-white font-bold py-2 px-4 rounded h-10"
                   onClick={handleTaskCompleted}
                 >

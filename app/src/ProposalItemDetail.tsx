@@ -169,7 +169,7 @@ function ProposalItemDetail() {
             </div>
           ))
         }
-        {!isUserVoted &&
+        {!isUserVoted ?
           <div className="flex items-center justify-center mt-2 flex-wrap">
             <div className="mr-2 text-center">残りの票数: </div>
             <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center mr-2">
@@ -185,6 +185,10 @@ function ProposalItemDetail() {
                 決定
               </Button>
             </div>
+          </div>
+          :
+          <div className="flex items-center justify-center mt-2 flex-wrap">
+            <div className="mr-2 text-center">投票完了しました！</div>
           </div>}
       </div >
     </div >

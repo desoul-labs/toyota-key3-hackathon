@@ -10,6 +10,6 @@ export function useAccount(): KeyringPair {
   }
   const keyring = new Keyring({ type: 'sr25519' });
   const acc = keyring.addFromUri(`${mnemonic}//Alice`, { name: 'Default' });
-  // console.log(keyring.encodeAddress(acc.publicKey));
+  console.log("account", keyring.encodeAddress(acc.publicKey));
   return acc;
 }
