@@ -66,7 +66,7 @@ function ProposalCreation() {
       expiredAt: timeValue!.unix().toString()
     }
     const blockTime = await (await api.query.timestamp.now()).toString()
-    const deadline = timeValue!.unix() - dayjs().unix() + parseInt(blockTime)
+    const deadline = (timeValue!.unix() - dayjs().unix()) * 1000 + parseInt(blockTime)
     const res = createProposal(deadline, options.length).then(async (res) => {
       console.log(res)
       const response = await fetch('https://toyota-hackathon.azurewebsites.net/api/CreateProposal', {
